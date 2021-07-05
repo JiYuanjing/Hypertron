@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE note [
+<!ENTITY listOfFiles "filelist_newdata_3gev.list">
+<!ENTITY dir "/star/u/yhleung2/pwg/33.standard_reco">
+]>
+
+<!--v7:ksigma3, bdt scanning-->
+
+<job fileListSyntax="xrootd" maxFilesPerProcess="15" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+starver SL19e
+mv StRoot StRoot_b
+mv StRoot_v3 StRoot
+cons
+root4star -q -l -b readPicoDst.C\(\"$FILELIST\",\"test\"\) &gt;&amp; ${JOBID}_0.log
+ls -lhrt
+source setDEV2.csh
+mv StRoot StRoot_v3
+mv StRoot_b StRoot
+cons
+root4star -b -q -l analysispicodst_ld_ana.C\(\"$FILELIST\",\"null\",true\) &gt;&amp; ${JOBID}_1.log
+ls -lhrt
+<!--mv ana_tree.root ${JOBID}_ana.root-->
+<!--echo "ana_tree.root" > filelist.txt-->
+<!--root4star -b -q -l process_tree_tmva_ld_kf_vn.C\(\0\) &gt;&amp; ${JOBID}_2.log-->
+<!--mv flow_hist.root ${JOBID}_flow_hist.root-->
+ls -lhrt
+mv ana_tree.root ${JOBID}_ana.root
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="all"/>
+<!--output fromScratch="*_hist.root" toURL="&dir;/taxi_ld_ana_flow_vn_fine_rap_newcentres_1/" /-->
+<output fromScratch="*.log" toURL="&dir;/log/" />
+<output fromScratch="*_ana.root" toURL="&dir;/taxi_ld_ana_flow_vn_loose_newdata_xcheck/" />
+
+<SandBox installer="ZIP">
+	<Package name="Package_Flow_vn_newdata">
+    <File>file:./StRoot/</File>
+    <File>file:./analysispicodst_ld_ana.C</File>
+    <File>file:./readPicoDst.C</File>
+    <File>file:./StRoot_v3/</File>
+    <File>file:./process_tree_tmva_ld_kf_vn.C</File>
+    <File>file:./setDEV2.csh</File>
+    <File>file:./.sl73_gcc485</File>
+    <File>file:./lMuDst.C</File>
+    <File>file:./filelist_3p85gev_new.list</File>
+	</Package>
+</SandBox>
+
+</job>

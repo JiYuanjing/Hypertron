@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE note [
+<!ENTITY listOfFiles "realdata.txt">
+<!ENTITY dir "/star/u/yhleung2/pwg/33.standard_reco">
+]>
+
+
+
+<job fileListSyntax="xrootd" maxFilesPerProcess="15" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+starver SL19c
+source setDEV2.csh
+cons
+root4star -b -q -l analysispicodst_om.C\(\"$FILELIST\",\"null\",true\) &gt;&amp; ${JOBID}.log 
+ls -lhrt
+mv ana_tree.root ${JOBID}_ana_tree.root        
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="20000"/>
+<!--input URL="filelist:&dir;/&listOfFiles;" nFiles="20000"/-->
+<!--input URL="catalog:star.bnl.gov?trgsetupname=27GeV_production_2018,production=P19ib,filename~st_physics,filetype=daq_reco_PicoDst,storage!=HPSS" nFiles="all"/-->
+<!--input URL="catalog:star.bnl.gov?trgsetupname=27GeV_production_2018,production=P19ib,filename~st_physics,filetype=daq_reco_PicoDst,storage!=HPSS" nFiles="5000"i/-->
+<output fromScratch="*_ana_tree.root" toURL="&dir;/taxi_om_data_ana/" />
+<output fromScratch="*.log" toURL="&dir;/log/" />
+
+<SandBox installer="ZIP">
+	<Package name="Package">
+    <File>file:./StRoot/</File>
+    <File>file:./analysispicodst_om.C</File>
+    <File>file:./setDEV2.csh</File>
+    <File>file:./.sl73_gcc485</File>
+    <File>file:./lMuDst.C</File>
+	</Package>
+</SandBox>
+
+</job>

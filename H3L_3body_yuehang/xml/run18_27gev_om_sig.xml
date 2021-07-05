@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE note [
+<!ENTITY listOfFiles "filelist_om_emb.txt">
+<!ENTITY dir "/star/u/yhleung2/pwg/33.standard_reco">
+]>
+
+
+
+<job fileListSyntax="xrootd" maxFilesPerProcess="10" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+starver SL19c
+source setDEV2.csh
+cons
+root4star -b -q -l analysismudst_om_emb.C\(\"$FILELIST\",\"null\",false\) &gt;&amp; ${JOBID}.log
+ls -lhrt 
+<!--mv Om_Signal.root ${JOBID}_sig.root-->
+mv ana_tree.root ${JOBID}_ana_tree.root
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="all"/>
+<output fromScratch="*_ana_tree.root" toURL="&dir;/taxi_om_sig_vksigma3/" />
+<output fromScratch="*.log" toURL="&dir;/log/" />
+
+<SandBox installer="ZIP">
+	<Package name="Package_2mc">
+    <File>file:./StRoot/</File>
+    <File>file:./analysismudst_om_emb.C</File>
+    <File>file:./setDEV2.csh</File>
+    <File>file:./.sl73_gcc485</File>
+    <File>file:./lMuDst.C</File>
+	</Package>
+</SandBox>
+
+</job>

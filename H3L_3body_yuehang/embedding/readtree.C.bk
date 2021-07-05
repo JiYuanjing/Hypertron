@@ -1,0 +1,171 @@
+#include "tree.h"
+void readtree(TString mInputlist, int mode = 0)
+{
+  double snn = 3;
+ double ycm;
+ if(snn==3){
+   ycm = -1.045;
+ }else{
+   ycm = -999.;
+ }
+
+  if (mode==1) treename = "hLambda_tree";
+  if (mode==0) treename = "htriton3_tree";
+  TChain htriton3_tree(); 
+   
+   if (mInputlist.Contains(".root"))
+   {
+      htriton3_tree.Add(mInputlist.Data());
+   }
+   else
+   {
+     int nfile = 0;
+     char tmp[2000];
+     ifstream readlists;
+     readlists.open(mInputlist.Data());
+     while (readlists.good()){
+       readlists.getline(tmp,2000);
+       TFile *ftmp = new TFile(tmp);
+       if (!ftmp||!(ftmp->IsOpen())||!(ftmp->GetNkeys())) {
+         cout<<"Could not open this file: "<< tmp  <<endl;
+       }
+       else {
+          if(Debug && nfile%30==0) cout<<"read in "<<nfile<<"th file: "<< tmp <<endl;
+           htriton3_tree.Add(tmp);
+           nfile++;
+         }
+     }
+   }
+
+  htriton3_tree.SetBranchAddress("bismc", &bismc);
+  htriton3_tree.SetBranchAddress("bparticlemass",&bparticlemass);
+	htriton3_tree.SetBranchAddress("bpx",&bpx);
+	htriton3_tree.SetBranchAddress("bpy",&bpy);
+	htriton3_tree.SetBranchAddress("bpz",&bpz);
+
+  htriton3_tree.SetBranchAddress("dca_proton",&dca_proton);
+  htriton3_tree.SetBranchAddress("dca_pion",&dca_pion);
+  htriton3_tree.SetBranchAddress("chi2primary_proton", &chi2primary_proton);
+  htriton3_tree.SetBranchAddress("chi2primary_pi", &chi2primary_pi);
+  /* htriton3_tree.SetBranchAddress("nhits_pion",&nhits_pion); */
+  /* htriton3_tree.SetBranchAddress("nhits_deuteron",&nhits_deuteron); */
+  /* htriton3_tree.SetBranchAddress("nhits_proton",&nhits_proton); */
+  //htriton3_tree.SetBranchAddress("ht_bdfvtx",&ht_bdfvtx);
+  //htriton3_tree.SetBranchAddress("ht_bdfvtx2",&ht_bdfvtx2);
+  //htriton3_tree.SetBranchAddress("ht_lifetime",&ht_lifetime);
+  htriton3_tree.SetBranchAddress("countrefmult",&countrefmult);
+  htriton3_tree.SetBranchAddress("reweight", &reweight);
+  htriton3_tree.SetBranchAddress("cent9", &cent9);
+
+  if (mode==0){
+    htriton3_tree.SetBranchAddress("v_01_pvdca", &v_01_pvdca); //pair distance from PV 
+    /* htriton3_tree.SetBranchAddress("v_01_chi2primary", &v_01_chi2primary); // */
+    htriton3_tree.SetBranchAddress("v_01_chi2ndf", &v_01_chi2ndf); //
+    htriton3_tree.SetBranchAddress("mass_01", &mass_01); // same as below
+	/* htriton3_tree.SetBranchAddress("v_lambda_mass_0", &v_lambda_mass_0); */
+	/* htriton3_tree.SetBranchAddress("v_lambda_ldl_0", &v_lambda_ldl_0); */ // will add later
+
+  /* htriton3_tree.SetBranchAddress("bdpx", &bdpx); */
+  /* htriton3_tree.SetBranchAddress("bdpy", &bdpy); */
+  /* htriton3_tree.SetBranchAddress("bdpz", &bdpz); */
+  htriton3_tree.SetBranchAddress("bpionpx", &bpionpx);
+  htriton3_tree.SetBranchAddress("bpionpy", &bpionpy);
+  htriton3_tree.SetBranchAddress("bpionpz", &bpionpz);
+  htriton3_tree.SetBranchAddress("bprotonpx", &bprotonpx);
+  htriton3_tree.SetBranchAddress("bprotonpy", &bprotonpy);
+  htriton3_tree.SetBranchAddress("bprotonpz", &bprotonpz);
+  htriton3_tree.SetBranchAddress("b0mcpx",&b0mcpx);
+  htriton3_tree.SetBranchAddress("b0mcpy",&b0mcpy);
+  htriton3_tree.SetBranchAddress("b0mcpz",&b0mcpz);
+  htriton3_tree.SetBranchAddress("b1mcpx",&b1mcpx);
+  htriton3_tree.SetBranchAddress("b1mcpy",&b1mcpy);
+  htriton3_tree.SetBranchAddress("b1mcpz",&b1mcpz);
+  }
+ htriton3_tree.SetBranchAddress("bmcpx",&bmcpx);
+ htriton3_tree.SetBranchAddress("bmcpy",&bmcpy);                                               
+ htriton_tree.SetBranchAddress("bmcpz",&bmcpz);
+ htriton3_tree.SetBranchAddress("bmcl",&bmcl);
+ htriton3_tree.SetBranchAddress("bmcpl",&bmcpl);
+ htriton3_tree.SetBranchAddress("bpl",&bpl);
+
+ if (mode ==1)
+ {
+  htriton3_tree.SetBranchAddress("ld_chi2ndf",&v_01_chi2ndf);
+ 
+ 
+ }
+ 
+  ////for quick test
+  /* TH2F* hptppildl = ; */ 
+  TH2F* hptppimass = new TH2F("hptppimass","hptppimass;p_{T};mass",100,0,10,50,1.06,1.16);
+  /* TH2F* hptppichi2prim= new TH2F("hptppichi2prim","hptppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,10,50,0,40); */
+  TH2F* hptppichi2ndf= new TH2F("hptppichi2ndf","hptppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,10,50,0,40);
+  TH2F* hptpichi2prim= new TH2F("hptpichi2prim","hptpichi2prim;p_{T};#pi #chi^{2}_{prim}",100,0,10,50,0,40);
+  TH2F* hptpchi2prim= new TH2F("hptpchi2prim","hptpchi2prim;p_{T};p #chi^{2}_{prim}",100,0,10,50,0,40);
+  TH2F* hptpidca = new TH2F("hptpidca","hptpidca;p_{T};DCA",100,0,10,100,0,6);
+  TH2F* hptpdca = new TH2F("hptpdca","hptpdca;p_{T};DCA",100,0,10,100,0,6);
+
+	Long64_t n_lambda_Entries = htriton3_tree.GetEntries();
+  for (int i=0;i<n_lambda_Entries;i++)
+  {
+      htriton3_tree->GetEntry(i); 
+      if (!bismc) continue;
+      double ptweight = 1; //reserved
+      double rapweight = 1;
+      double mcweight = 1;
+    /*    TLorentzVector mcptc(bmcpx,bmcpy,bmcpz,sqrt(bmcpx*bmcpx+bmcpy*bmcpy+bmcpz*bmcpz+hl_mass*hl_mass)); */
+    /* bmcrap = mcptc.Rapidity() - ycm; */
+      /* if (mode=0)  */
+/*         mcweight = 1./g_pt_fine_in->GetBinContent(g_pt_fine_in->FindBin(bmcrap,sqrt(bmcpx*bmcpx+bmcpy*bmcpy))); */
+/*  */
+/*  if(_wgt==0){  */
+/*    rap_weight=1.; */
+/*    pt_weight = 1.; */
+/*  } */
+/*  else if(_wgt==1){ */
+/*   rap_weight = t_quadr->Eval(bmcrap); */
+/*   pt_weight = bolt1->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy)); */
+/*   } */
+/*  else if(_wgt==2){ */
+/*   rap_weight = t_quadr0->Eval(bmcrap); */
+/*   pt_weight =bolt0->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy)); */
+/*   } */
+/*  else if(_wgt==3){ */
+/*   rap_weight = 1; */
+/*   pt_weight =bolt0->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy)); */
+/*   } */
+/*  else if(_wgt==4){ */
+/*   rap_weight = t_quadr0->Eval(bmcrap); */
+/*   pt_weight =bolt1->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy)); */
+/*   } */
+/*  else if(_wgt==5){ */
+/*   rap_weight = t_quadr0->Eval(bmcrap); */
+/*   pt_weight =bolt2->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy)); */
+/*   } */
+      double weight = ptweight*rapweight*mcweight*reweight;
+      double ppi_pt = sqrt(bpx*bpx+bpy*bpy); 
+      if (mode==0) ppi_pt= sqrt(bpionpx*bpionpx+bpionpy*bpionpy+bprotonpy*bprotonpy+bprotonpx*bprotonpx);
+      hptpdca->Fill( ppi_pt,dca_proton, weight);
+      hptpidca->Fill( ppi_pt,dca_pion, weight);
+      hptpchi2prim->Fill( ppi_pt,chi2primary_proton, weight);
+      hptpichi2prim->Fill( ppi_pt,chi2primary_pi, weight);
+      hptppimass->Fill( ppi_pt, mass_01, weight);
+      hptppichi2ndf->Fill( ppi_pt, v_01_chi2ndf, weight);
+      /* hptppichi2prim->Fill( ppi_pt, v_01_chi2primary, weight); */
+
+  }
+
+  TFile* fout = new TFile("fout.root","recreate");
+  
+  hptppichi2prim->Write();
+  hptppimass->Write(); 
+  hptppichi2prim->Write();
+  hptppichi2ndf->Write();
+  hptpichi2prim->Write();
+  hptpchi2prim->Write();
+  hptpidca->Write();
+  hptpdca->Write();
+
+  fout->Close();
+  htriton3_tree->Close();
+}

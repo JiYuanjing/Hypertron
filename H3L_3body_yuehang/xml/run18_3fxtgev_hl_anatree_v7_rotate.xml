@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE note [
+<!ENTITY listOfFiles "filelist_3p85gev_new.list">
+<!ENTITY dir "/star/u/yhleung2/pwg/33.standard_reco">
+]>
+
+<!--v7:ksigma3, bdt scanning-->
+
+<job fileListSyntax="xrootd" maxFilesPerProcess="15" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+starver SL19e
+source setDEV2.csh
+cons
+root4star -b -q -l analysispicodst_hyl_rotate.C\(\"$FILELIST\",\"null\",true\) &gt;&amp; ${JOBID}.log 
+ls -lhrt
+<!--mv ana_tree.root ${JOBID}_ana.root-->
+echo "ana_tree.root" > filelist.txt
+<!--root4star -b -q -l process_tree_tmva_om_kf.C\(1,0\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,1\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,2\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,3\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,4\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,5\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,-3\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,-4\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,-5\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,6\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,7\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,8\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,0\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,106\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v3.C\(1,-106\)-->
+
+<!--root4star -b -q -l process_tree_tmva_om_kf_v2.C\(1,6\)-->
+<!--root4star -b -q -l process_tree_tmva_om_kf_v2.C\(1,-6\)-->
+<!--mv ana_tree_cut_mode_0.root hist_cut_mode_0_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_1.root hist_cut_mode_1_${JOBID}.root-->
+
+mv ana_tree.root ana_tree_${JOBID}.root
+<!-->mv ana_tree_cut_mode_2.root hist_cut_mode_2_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_3.root hist_cut_mode_3_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_4.root hist_cut_mode_4_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_5.root hist_cut_mode_5_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_-3.root hist_cut_mode_n3_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_-4.root hist_cut_mode_n4_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_-5.root hist_cut_mode_n5_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_6.root hist_cut_mode_6_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_7.root hist_cut_mode_7_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_8.root hist_cut_mode_8_${JOBID}.root-->
+
+<!--mv ana_tree_cut_mode_6.root hist_cut_mode_6_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_-6.root hist_cut_mode_n6_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_0.root hist_cut_mode_0_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_106.root hist_cut_mode_106_${JOBID}.root-->
+<!--mv ana_tree_cut_mode_-106.root hist_cut_mode_n106_${JOBID}.root-->
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="all"/>
+<!--input URL="catalog:star.bnl.gov?trgsetupname=27GeV_production_2018,production=P19ib,filename~st_physics,filetype=daq_reco_PicoDst,storage!=HPSS" nFiles="all"/-->
+<!--input URL="catalog:star.bnl.gov?trgsetupname=27GeV_production_2018,production=P19ib,filename~st_physics,filetype=daq_reco_PicoDst,storage!=HPSS" nFiles="5000"i/-->
+<!--output fromScratch="*_ana.root" toURL="&dir;/taxi_ana/" /-->
+<output fromScratch="ana_tree_*.root" toURL="&dir;/taxi_hl_anatree_3gev_veryloose_rotate_pid/" />
+<output fromScratch="*.log" toURL="&dir;/log/" />
+
+<SandBox installer="ZIP">
+	<Package name="Package_32">
+    <File>file:./StRoot/</File>
+    <File>file:./analysispicodst_hyl_rotate.C</File>
+    <File>file:./process_tree_tmva_om_kf_v3.C</File>
+    <File>file:./setDEV2.csh</File>
+    <File>file:./.sl73_gcc485</File>
+    <File>file:./lMuDst.C</File>
+	</Package>
+</SandBox>
+
+</job>

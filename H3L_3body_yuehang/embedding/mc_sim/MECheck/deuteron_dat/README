@@ -1,0 +1,9 @@
+pT	pT_low	pT_up	spectra		sys.+sts.
+
+
+y3:-0.1<y<0.0
+y4:-0.2<y<-0.1
+.
+.
+.
+y12:-1.0<y<-0.9

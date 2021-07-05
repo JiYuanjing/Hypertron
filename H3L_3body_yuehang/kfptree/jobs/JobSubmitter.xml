@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<job fileListSyntax="xrootd" maxFilesPerProcess="15" simulateSubmission="false">
+
+<command>
+starver SL20d
+mv StRoot StRoot_b
+mv StRoot_v2 StRoot
+cons
+root4star -q -l -b StRoot/macro/readPicoDst.C\(\"$FILELIST\",\"test\"\) &gt;${JOBID}_0.log
+ls -lhrt
+
+mv StRoot StRoot_v2
+mv StRoot_b StRoot
+source setDEV2.csh
+cons
+root4star -b -q -l StRoot/macro/analysispicodst_ldxi_pol.C\(\"$FILELIST\",\"null\",true\) &gt;${JOBID}_1.log
+mv ana_tree.root ${JOBID}_ana.root
+
+ls -lhrt       
+echo "INPUTFILECOUNT: $INPUTFILECOUNT"
+</command>
+    
+    
+<stderr URL="file:&Tmp;/log_&ver;/$JOBID.err" />
+<stdout URL="file:&Tmp;/log_&ver;/$JOBID.out" />
+<input URL="filelist:&path;/jobs/&listOfFiles;"/>
+<output fromScratch="*_1.log" toURL="&Tmp;/log_&ver;/"/>
+<output fromScratch="*_ana.root" toURL="&path;/jobs/out/out_&ver;/" />
+
+    <SandBox installer="ZIP">
+	<Package name="kfptree">
+    <File>file:&path;/StRoot/</File>
+    <File>file:&path;/StRoot_v2/</File>
+    <File>file:&path;/setDEV2.csh</File>
+    <File>file:&path;/.sl73_x8664_gcc485</File>
+    <File>file:&path;/.sl73_gcc485</File>
+    <File>file:&path;/lMuDst.C</File>
+    </Package>
+</SandBox>
+    
+</job>

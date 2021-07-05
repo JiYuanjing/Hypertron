@@ -1,0 +1,9 @@
+*.log
+*/log/*
+*/production/*
+*.root
+*.pdf
+*.png
+*.list
+*.list_*
+*/list/*

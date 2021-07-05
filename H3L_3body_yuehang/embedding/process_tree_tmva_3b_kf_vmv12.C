@@ -1,0 +1,1942 @@
+//v12: 2 rapbins
+//v11: add mc lambdamass
+//v10: add raw lambda mass
+//v9: work for pt
+//v8: add BDT
+//v7: add fiducial
+//THIS MACRO REQUIRES TMVA package, better run on rcf
+//write mass/pt histograms that can be read offline
+
+//v6 add countrefmult
+#include <cstdlib>
+#include <iostream>
+#include <math.h>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <map>
+#include <string>
+
+#include "TChain.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TString.h"
+#include "TObjString.h"
+#include "TSystem.h"
+#include "TROOT.h"
+#include "TStopwatch.h"
+#include "TStyle.h"
+#include "TSystem.h"
+#include "TFile.h"
+#include "TCanvas.h"
+#include "TPaveLabel.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3.h"
+#include "TF1.h"
+#include "TNtuple.h"
+#include "TText.h"
+#include "TDatime.h"
+#include "TRandom.h"
+#include "TChain.h"
+#include "TLegend.h"
+#include "TProfile.h"
+#include "TLorentzVector.h"
+#include "TRandom2.h"
+#include "TVector3.h"
+#include "TGraphErrors.h"
+
+#if not defined(__CINT__) || defined(__MAKECINT__)
+// needs to be included when makecint runs (ACLIC)
+#include "TMVA/Factory.h"
+#include "TMVA/Tools.h"
+#include "TMVA/Reader.h"
+#endif
+
+
+const int npttmvabins = 1;
+//const int nptbins = 6;
+const int nptbins = 7;
+const int ncenttmvabins = 2;
+//const int ncentbins = 8;
+const int ncentbins = 9;
+
+ TH1F	*hvtx;
+ TH1F	*hvtxgood;
+ TH1F	*hrefmult;
+ TH1F	*wrefmult;
+
+ TH1F   *gvtx;
+ TH1F   *gvtxgood;
+ TH1F   *grefmult;
+ TH1F   *frefmult;
+
+ TH2F  *h_dedx_p;
+
+TH1F  *h_hl_pl;
+TH1F  *h_hl_pl_bg;
+
+ TH1F  *h_ht_mass;
+ TH1F  *h_ht_mass_bg;
+
+ TH1F  *h_ht_ldl_bg;
+ TH1F  *h_ht_dl_bg;
+ TH1F  *h_ht_l_bg;
+
+ TH2F *h_eta;
+ TH2F *h_rap;
+ TH2F *g_eta;
+
+TH3F *h_pt_proton;
+TH3F *h_pt_pion;
+TH3F *h_pt_deuteron;
+//TH2F *mkfIncMassPtUL3_0[ncenttmvabins];
+//TH2F *mkfIncMassPtUL3_1[ncenttmvabins];
+//TH2F *mkfIncMassPtUL4_0[ncenttmvabins];
+//TH2F *mkfIncMassPtUL4_1[ncenttmvabins];
+
+        TH3F *h_v_01_pvdca;
+        TH3F *h_v_02_pvdca;
+        TH3F *h_v_12_pvdca;
+        TH3F *h_ht_bdfvtx;
+        TH3F *h_ht_bdfvtx2;
+
+TH1F *h_lambda;
+TH1F *g_lambda;
+TH3F *h_nhits_proton;
+TH3F *h_nhits_pion;
+TH3F *h_nhits_deuteron;
+
+TH2F *mkfIncMassPtUL3_0[ncentbins];
+TH2F *mkfIncMassPtUL3_1[ncentbins];
+TH2F *mkfIncMassPtUL4_0[ncentbins];
+TH2F *mkfIncMassPtUL4_1[ncentbins];
+
+
+TH3F *h_mass_01;
+TH3F *h_mass_02;
+TH3F *h_mass_12;
+
+TH2F *mkfIncMassPtUL5_0[ncentbins];
+TH2F *mkfIncMassPtUL6_0[ncentbins];
+TH3F *h_mass_qa;
+TH3F *h_mass_pl;
+TH3F *h_mass_pt;
+TH3F *h_chi2primary_proton;
+TH3F *h_chi2primary_pi;
+TH3F *h_chi2primary_deuteron;
+TH3F *h_v_01_chi2primary;
+TH3F *h_v_02_chi2primary;
+TH3F *h_v_12_chi2primary;
+TH3F *h_v_01_dca;
+TH3F *h_v_02_dca;
+TH3F *h_v_12_dca;
+
+TH3F *h_ht_ldl;
+TH3F *h_ht_l;
+TH3F *h_ht_dl;
+TH3F *h_ht_chi2topo;
+TH3F *h_ht_chi2ndf;
+TH3F *h_ht_dca_proton;
+TH3F *h_ht_dca_pion;
+TH3F *h_ht_dca_deuteron;
+
+TH3F *h_mass_pt_wgt;
+TH3F *h_mass_pl_wgt;
+TH1F *h_cent;
+
+TH3F *h_bnhits;
+TH3F *h_bdedx;
+TH2F *g_pt_fine;
+TH2F *g_pt_fine_wgt;
+TH2F *g_pt_fine2;
+TH2F *g_pt_fine2_wgt;
+
+TH3F *h_ht_lifetime;
+TH3F *h_ht_bdt;
+TH2F *h_lt_mc;
+TH2F *g_lt_mc;
+
+TH2F *h_pt;
+TH2F *h_r_pt;
+TH2F *g_pt;
+TH2F *g_pl;
+TH2F *g_pt_wgt;
+TH2F *g_pl_wgt;
+TH3F *h_dca;
+TF1 *ld_gaus;
+
+TH2F *h_p_mc;
+TH2F *h_pt_mc;
+TH2F *h_l_mc;
+TH2F *h_pl_mc;
+TH2F *g_p_mc;
+TH2F *g_pt_mc;
+TH2F *g_l_mc;
+TH2F *g_pl_mc;
+
+TH2F *g_pt_fine_in;
+
+int cent_label;
+bool _applyweight;
+
+// double ptbin[npttmvabins+1] = {0.0,1.0,2.0,3.0,5.0,10.0};
+//double ptbin[nptbins+1] = {0.4,0.8,1.2,1.6,2.0,2.4,2.8};
+double ptbin[nptbins+1] = {2.0,6.0,10.0,14.0,18.0,26.0,34.0,50.0};
+
+int centtmva_limit[ncenttmvabins+1] = {0,10,80};
+
+int cent_limit[ncentbins+1] = {0,5,10,20,30,40,50,60,70,80};
+//int cent_limit[ncentbins+1] = {0,5,10,20,30,40,50,60,80};
+bool _cent_off = true;
+
+TMVA::Reader* reader[nptbins+1];
+
+//int snn=28;
+int snn=3;
+
+int    _cut_mode       ;
+//_cut_mode = 0;//loose
+//_cut_mode = 1;//default
+//_cut_mode = 2;//bdt
+
+float xi_chi2topo     ;
+float xi_chi2ndf      ;
+float xi_ldl          ;
+float xi_ht_chi2topo  ;
+float xi_ht_chi2ndf   ;
+float xi_ht_ldl       ;
+float xi_ht_l         ;
+float xi_l            ;
+float xi_dl           ;
+
+double mvaValue        ;
+double mvaCut        ;
+double delta           ;
+
+int    brunid          ;
+int    beventid        ;
+int    brefmult        ;
+int    btofmult        ;
+float  bVz             ;
+float  bVzerr	;
+int    bparticleid     ;
+float  bparticlemass   ;
+float  bpx             ;
+float  bpy             ;
+float  bpz             ;
+float  bpt	       ;
+float  bp 	       ;
+float  beta            ;
+float  brap            ;
+int    _rotate         ;
+float bdca;
+
+float bdpx;
+float bdpy;
+float bdpz;
+float bpionpx;
+float bpionpy;
+float bpionpz;
+float bprotonpx;
+float bprotonpy;
+float bprotonpz;
+
+int bmcparticleid;
+float bmcrawpx;
+float bmcrawpy;
+float bmcrawpz;
+
+float v_01_dca;
+float v_02_dca;
+float v_12_dca;
+
+float bdedx;
+int bnhits;
+
+int    pionidtruth     ;
+int    protonidtruth   ;
+
+int    _data_or_sim = 0;
+
+/*
+float ht_pv_dca_ld;
+float p_pv_dca_ld;
+float pi_pv_dca_ld;
+float pi_p_dca_ld;
+float decaylen_ld;
+float ang0_ld;
+*/
+
+float ht_chi2topo     ;
+float ht_chi2ndf      ;
+float chi2primary_pi     ;
+
+float chi2Primary_Pi;
+float chi2Primary_Proton;
+
+float om_chi2topo;
+float om_chi2ndf;
+float om_ldl;
+float om_ht_chi2topo;
+float om_ht_chi2ndf;
+float om_ht_ldl;
+float om_ht_l;
+float om_l;
+float om_dl;
+
+float chi2primary_proton;
+float ht_ldl;
+float ht_dl;
+float ht_l;
+
+float         dca_proton_cut;
+float om_chi2topo_cut;
+float om_chi2ndf_cut;
+float om_ldl_cut;
+float om_ht_chi2topo_cut;
+float om_ht_chi2ndf_cut;
+float om_ht_ldl_cut;
+float om_ht_l_cut;
+float om_l_cut;
+float om_dl_cut;
+
+float xi_chi2topo_cut;
+float xi_chi2ndf_cut;
+float xi_ldl_cut;
+float xi_ht_chi2topo_cut;
+float xi_ht_chi2ndf_cut;
+float xi_ht_ldl_cut;
+float xi_ht_l_cut;
+float xi_l_cut;
+float xi_dl_cut;
+
+float chi2Primary_Kaon;
+float chi2Primary_Bach;
+float chi2Primary_Pion;
+float Chi2NDF;
+float LdL;
+float L;
+float Chi2Topo;
+float Chi2NDF_ld;
+float LdL_ld;
+float L_ld;
+float Chi2Topo_ld;
+
+int nhits_pion;
+int nhits_deuteron;
+int nhits_proton;
+
+float v_01_pvdca;
+float v_02_pvdca;
+float v_12_pvdca;
+
+//float ht_chi2topo_cut;
+//float ht_chi2ndf_cut;
+//float ht_ldl_cut;
+//float ht_l_cut;
+//float chi2primary_proton_cut;
+
+float hl_chi2topo_cut;
+float hl_chi2ndf_cut;
+float hl_ldl_cut;
+float hl_l_cut;
+float chi2primary_h4_cut;
+
+double ht_mass = 2.99131;
+double ht_width = 0.005;
+double hl_mass = 3.9239;
+double hl_width = 0.005;
+
+//float ht_mass = 1.115683;
+
+int mccountrefmult;
+int notbadrun;
+float ycm;
+double reweight;
+int cent9;
+/*
+ ht_mass = 2.991;
+ ht_width= 0.005;
+
+ hl_mass = 3.9235;
+ hl_width= 0.005;
+*/
+
+//standard cut
+/*
+float  ht_pv_dca_ht_cut = 0.8;
+float  p_pv_dca_ht_cut = 0.5;
+float  pi_pv_dca_ht_cut = 1.5;
+float  pi_p_dca_ht_cut = 0.8;
+float  decaylen_ht_cut = 3.0;
+float  ang0_ht_cut = 0.0;
+*/
+
+float ht_chi2topo_cut = 5     ;
+float ht_chi2ndf_cut = 10     ;
+float ht_ldl_cut = 5          ;
+float ht_l_cut = 5            ;
+//float ht_dl           ;
+float chi2primary_proton_cut = 18.6 ;
+float chi2primary_pi_cut = 18.6     ;
+//end standard cut
+int    _condor;
+Char_t path_ch[10000];
+Char_t ofile[10000];
+
+double bdt_o_cut;
+
+float mass_lo;
+float mass_hi;
+
+float bmcrawpl;
+float hl_chi2ndf;
+float hl_ldl;
+float hl_chi2topo;
+float hl_dl;
+float hl_l;
+float chi2primary_h4;
+float bmcrap;
+float bmcpx;
+float bmcpy;
+float bmcpz;
+float chi2primary_d;
+float b0mcpx;
+float b0mcpy;
+float b0mcpz;
+float b1mcpx;
+float b1mcpy;
+float b1mcpz;
+float b2mcpx;
+float b2mcpy;
+float b2mcpz;
+
+float mass_02;
+float mass_01;
+float mass_12;
+float bmcl;
+float bmcpl;
+float bpl;
+float nsigma_pion_cut;
+float nsigma_proton_cut;
+
+float b0mcrawpx;
+float b0mcrawpy;
+float b0mcrawpz;
+float b1mcrawpx;
+float b1mcrawpy;
+float b1mcrawpz;
+float b2mcrawpx;
+float b2mcrawpy;
+float b2mcrawpz;
+
+float ht_bdfvtx;
+float ht_bdfvtx2;
+float ht_lifetime;
+
+float dca_proton;
+float dca_pion;
+float dca_deuteron;
+
+float bpionnsigma;
+float bprotonsigma;
+float bzdeuteron;
+
+float v_01_chi2primary;
+float v_02_chi2primary;
+float v_12_chi2primary;
+
+TFile  *fgpt_0;
+
+TF1 *levyfit4;
+TF1 *levyfit5;
+TF1 *levyfit6;
+TF1 *levyfit7;
+TF1 *levyfit8;
+TF1 *t_quadr;
+TF1 *t_quadr0;
+TF1 *t_quadr1;
+TF1 *bolt0;
+TF1 *bolt1;
+TF1 *bolt2;
+
+const int nrapbins = 9;
+TH1D *g_pt_py[nrapbins];
+
+int bismc;
+// float bdt_ht_cut[ncenttmvabins][npttmvabins];
+
+//obsolete, used for bdt scanning
+//float bdt_ht_cut[nptbins] = {0.,0.1155,0.1818,0.1164,0.0865,0.0835,0.1125};
+//float bdt_ht_cut[nptbins] = {0.,0.1155,0.1155,0.1164,0.0865,0.0835,0.00835};//smoothing the second bin and the last bin.
+
+//default
+//float bdt_ht_cut[nptbins] = {0.,0.0678,0.1170,0.1190,0.0847,0.0859,0.0663};
+
+//sideband
+//float bdt_ht_cut[nptbins] = {0.,0.0798,0.1134,0.1216,0.1151,0.0936,0.1157};
+
+//sideband, with correct precuts and fiducials
+//float bdt_ht_cut[nptbins] = {0.,0.0526,0.0790,0.0679,0.0688,0.0795,0.0599};
+
+//rotational, with correct precuts and fiducials
+float bdt_ht_cut[nptbins] = {0.,0.0261,0.0607,0.0557,0.0852,0.0493,0.0033};
+
+
+float weight;
+int countrefmult;
+
+int centrality;
+int centFull[ncentbins] ={15,22,32,43,57,73,92,117,133};
+
+//using for xi analyusis
+const int ncentbdtbins = 3;
+const int nptbdtbins = 7;
+float bdt_xi_cut[ncentbdtbins][nptbdtbins];
+double ptbdtbin[nptbdtbins+1] = {0.2,0.6,1.0,1.4,1.8,2.2,2.6,3.0};
+float r_cent[ncentbins+1] = {0., 0., 0.178389, 0.466883, 1.06469, 2.30611, 2.70053, 1.49454, 0.866928,0};
+
+int choose_cent;
+int _batch;
+int _wgt;
+int Centrality(int aa );
+void book_histo();
+void write_histo();
+
+void process_tree_tmva_3b_kf_vmv12(int condor=0, int cut_mode=0, int wgt=2, int batch=0){
+
+        _condor = condor;//condor=1: condor settings
+        _cut_mode = cut_mode;
+        _wgt = wgt;
+	_batch = batch;
+
+        cout<<"_wgt:"<<_wgt<<endl;
+        choose_cent	= 0;
+	//    choose_cent = 1;
+	//    choose_cent = 2;
+
+
+	ld_gaus = new TF1("ld_gaus", "[1]*exp(-(x-[0])*(x-[0])/2/[2]/[2])",1.1,1.135);
+	ld_gaus->SetParameter(0,1.11583e+00);
+	ld_gaus->SetParameter(1,1);
+	ld_gaus->SetParameter(2,4.01078e-03);
+
+	levyfit4 = new TF1("levyfit4","x*[2]*pow((1+(sqrt(1.11568*1.11568+x*x)-1.11568)/[1]/[0]),(-1)*[1])", 0.4,2.4);
+	levyfit5 = new TF1("levyfit5","x*[2]*pow((1+(sqrt(1.11568*1.11568+x*x)-1.11568)/[1]/[0]),(-1)*[1])", 0.2,2.4);
+	levyfit6 = new TF1("levyfit6","x*[2]*pow((1+(sqrt(1.11568*1.11568+x*x)-1.11568)/[1]/[0]),(-1)*[1])", 0.2,2.4);
+	levyfit7 = new TF1("levyfit7","x*[2]*pow((1+(sqrt(1.11568*1.11568+x*x)-1.11568)/[1]/[0]),(-1)*[1])", 0.2,2.4);
+	levyfit8 = new TF1("levyfit8","x*[2]*pow((1+(sqrt(1.11568*1.11568+x*x)-1.11568)/[1]/[0]),(-1)*[1])", 0.2,2.4);
+	t_quadr = new TF1("t_quadr","[0]+[1]*x+[2]*x*x",-2,2);
+
+	t_quadr0 = new TF1("t_quadr0","[0]+[1]*x+[2]*x*x",-2,2);
+	t_quadr1 = new TF1("t_quadr1","[0]+[1]*x+[2]*x*x",-2,2);
+	//bolt0 = new TF1("bolt0", "x*sqrt(2.80941350568*2.80941350568+x*x)*exp(-sqrt(2.80941350568*2.80941350568+x*x)/[0])", 0.,5);
+	//bolt1 = new TF1("bolt1", "x*sqrt(3.72840015733*3.72840015733+x*x)*exp(-sqrt(3.72840015733*3.72840015733+x*x)/[0])", 0.,5);
+	
+	bolt0 = new TF1("bolt0", "1e9*x*sqrt(2.990*2.990+x*x)*exp(-sqrt(2.990*2.990+x*x)/[0])", 0.,5);
+        bolt1 = new TF1("bolt0", "1e9*x*sqrt(2.990*2.990+x*x)*exp(-sqrt(2.990*2.990+x*x)/[0])", 0.,5);
+        bolt2 = new TF1("bolt0", "1e9*x*sqrt(2.990*2.990+x*x)*exp(-sqrt(2.990*2.990+x*x)/[0])", 0.,5);
+
+	levyfit4->SetParameters(1.53536e-01 , -1.21064e+08, 5.25287e+07);
+	levyfit5->SetParameters(1.51332e-01 , -1.25927e+08, 4.86193e+07);
+	levyfit6->SetParameters(1.45903e-01 , -1.60954e+08, 4.74115e+07);
+	levyfit7->SetParameters(1.28382e-01 , -1.60610e+08, 4.92025e+07);
+	levyfit8->SetParameters(1.11371e-01 , -2.04689e+08, 4.22255e+07);
+
+//	t_quadr->SetParameters(2.06539, 0.0, -1.75299);//this is from fit to 3gevlambdadata
+        t_quadr->SetParameters(4.71255e-01,0.00000e+00,1.79971e+00*1.5);//this is from fit to 3gevv data, multiply second paramter by 1.5
+
+	//t_quadr0->SetParameters(3.04528e+01, 0.0, 6.71347e+01);//this is from fit to he3 data
+	t_quadr0->SetParameters(4.71255e-01,0.00000e+00,1.79971e+00);//this is from fit to 3gevv data
+
+	//TODO!
+	//t_quadr0->SetParameters(1,0,0);//FOR TESTING
+	//t_quadr0->SetParameters(3.04528e+01, 0.0, 5*6.71347e+01);//FOR TESTING
+
+	t_quadr1->SetParameters(6.88265e+01, 0.0, 1.90472e+02);
+	bolt0->SetParameter(0,0.40);
+	bolt1->SetParameter(0,0.20);
+	bolt2->SetParameter(0,0.15);
+
+	fgpt_0 = new TFile("h_gpt_ht.root","READ");
+	for(int irap=0;irap<nrapbins;irap++){
+	g_pt_py[irap] = (TH1D*)fgpt_0->Get(Form("g_pt_py[%d]",irap));
+	}
+
+	fgpt_0 = new TFile("3b_input_mc_fine.root","READ");
+	g_pt_fine_in = (TH2F*)fgpt_0->Get("g_pt_fine")->Clone("g_pt_fine_in");
+
+
+	// This loads the library
+	TMVA::Tools::Instance();
+
+	for(int ipt=0;ipt<nptbins;ipt++){
+
+ 	reader[ipt] =  new TMVA::Reader( "!Color:!Silent" );
+
+        reader[ipt]->AddVariable("chi2primary_pi", &chi2primary_pi);//TODO!!!
+        reader[ipt]->AddVariable("chi2primary_he", &chi2primary_proton);//TODO!!!
+        reader[ipt]->AddVariable("ht_chi2topo", &ht_chi2topo);
+        reader[ipt]->AddVariable("ht_chi2ndf", &ht_chi2ndf);
+
+	reader[ipt]->AddSpectator("ht_l", &ht_l);
+        reader[ipt]->AddSpectator("ht_ldl", &ht_ldl);
+
+        reader[ipt]->BookMVA( "BDT" , Form("/star/u/yhleung2/pwg/33.standard_reco/weights/tmva_ht_weight_kf_pt_%d_BDT.weights.xml",ipt));
+        //reader[ipt]->BookMVA( "BDT" , Form("/star/u/yhleung2/pwg/33.standard_reco/weights/tmva_ht_weight_kf_pt_sideband_%d_BDT.weights.xml",ipt));
+
+        }//pt
+
+	double delta_bdtscan = -0.05;//*****This should be a minus sign
+
+//cent00-10
+bdt_xi_cut[0][0] = 0.1063;//30000
+bdt_xi_cut[0][1] = 0.0388;//5069.46
+bdt_xi_cut[0][2] = 0.0382;//2000
+bdt_xi_cut[0][3] = -0.0208;//1300
+bdt_xi_cut[0][4] = -0.0208;
+bdt_xi_cut[0][5] = -0.0423;//700
+bdt_xi_cut[0][6] = -0.0423;
+
+//cent10-40
+bdt_xi_cut[1][0] = 0.1109;//18868
+bdt_xi_cut[1][1] = 0.0051;//1551.67
+bdt_xi_cut[1][2] = -0.0285;//616
+bdt_xi_cut[1][3] = -0.0476;//400
+bdt_xi_cut[1][4] = -0.0476;//400
+bdt_xi_cut[1][5] = -0.0980;//240
+bdt_xi_cut[1][6] = -0.0980;//240
+
+//cent40-80
+bdt_xi_cut[2][0] = -0.0980;//240
+bdt_xi_cut[2][1] = -0.1116;//90
+bdt_xi_cut[2][2] = -0.1116;//90
+bdt_xi_cut[2][3] = -0.1523;//60
+bdt_xi_cut[2][4] = -0.1523;//60
+bdt_xi_cut[2][5] = -0.1523;//60
+bdt_xi_cut[2][6] = -0.1523;//60
+
+
+	TChain htriton3_tree("htriton3_tree");
+	TChain htriton3_mc_tree("htriton_mc_tree");
+
+	int nChains = -999999;
+	ifstream fin;
+
+if(_condor==0){//emb
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu/sum/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_mu.root");
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/filelist_ht_emb3.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_mu3.root");
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex/sum/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_mu4.root");
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_anderror/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_mu5.root");
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_andnoerror/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_mu5noerr.root");
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_werror2/filelist.txt");
+//strcpy (ofile, "run18_3gev_ht_hist_mu6.root");
+//nChains = 1;
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_werror4/filelist.txt");
+//strcpy (ofile, "run18_3gev_ht_hist_mu7.root");
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_werror_veryloose/filelist.txt");
+//strcpy (ofile, "run18_3gev_ht_hist_mu_veryloose.root");
+//nChains = 1;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_werror_3/sum/filelist.txt");
+//strcpy (ofile, "run18_3gev_ht_hist_mu_3.root");
+//nChains = 1;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_w10xerror_3/sum/filelist.txt");
+//strcpy (ofile, "run18_3gev_ht_hist_mu_10x_3.root");
+//nChains = 1;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_w5xerror_4/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_ht_hist_mu_5x_3_newreweight_centa%d.root",choose_cent));
+//nChains = 1;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu3_correctedvertex_w5xerror_5/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_ht_hist_mu_5x_5_newreweight_centa%d.root",choose_cent));
+//nChains = 326;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_ht_hist_mu_1x_1_newreweight_centa%d.root",choose_cent));
+//nChains = 90;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu_3/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_ht_hist_mu_1x_3_newreweight_centa%d_wgt%d.root",choose_cent,_wgt));
+//nChains = 153;
+
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu_newpid_0/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_ht_hist_mu_1x_9_newreweight_centa%d_wgt%d_cut%d.root",choose_cent,_wgt,_cut_mode));
+//nChains = 393;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu_newpid_2/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_ht_hist_mu_1x_11_newreweight_centa%d_wgt%d_cut%d.root",choose_cent,_wgt,_cut_mode));
+//nChains = 392;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_mu_newpid_manualvtxerr/filelist2.txt");
+//strcpy (ofile, Form("run18_3gev_ht_hist_mu_1x_13_newreweight_centa%d_wgt%d_cut%d.root",choose_cent,_wgt,_cut_mode));
+//nChains = 392;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_mu/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_3b_hist_mu_1x_13_newreweight_centa%d_wgt%d_cut%d.root",choose_cent,_wgt,_cut_mode));
+//nChains = 89;
+
+fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_mu_manualvtxerr_new_5/filelist.txt");
+//strcpy (ofile, Form("run18_3gev_3b_hist_mu_1x_30_newreweight_centa%d_wgt%d_cut%d_mve.root",choose_cent,_wgt,_cut_mode));
+
+strcpy (ofile, Form("run18_3gev_3b_hist_mu_1x_61_newreweight_centa%d_wgt%d_cut%d_mve.root",choose_cent,_wgt,_cut_mode));
+//strcpy (ofile, Form("run18_3gev_3b_hist_mu_1x_36_newreweight_centa%d_wgt%d_cut%d_mve.root",choose_cent,_wgt,_cut_mode));//35 with lambda weight, 36 wo lambda weight
+nChains = 254;
+}
+if(_condor==1){//data
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico/sum/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_pico.root");
+//
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate/sum/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_pico_rotate.root");
+//nChains = 1;
+//
+//loose cuts
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_tree/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_pico_loose.root");
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_pico_rotate_loose.root");
+//nChains = 1200;
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_tree_2/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_pico_loose_7.root");
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree_2/filelist.txt");
+//strcpy (ofile,"run18_3gev_ht_hist_pico_rotate_loose_7.root");
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_tree_4/filelist.txt");
+//strcpy (ofile,Form("run18_3gev_ht_hist_pico_loose_4_centa%d.root",choose_cent));
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree_4/filelist.txt");
+//strcpy (ofile,Form("run18_3gev_ht_hist_pico_rotate_loose_4_centa%d.root",choose_cent));
+//nChains = 1200;
+
+
+
+//	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_tree_5/filelist.txt");
+//	strcpy (ofile,Form("run18_3gev_ht_hist_pico_loose_6_centa%d_cut%d.root",choose_cent,_cut_mode));
+
+
+//	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree_5/filelist.txt");
+//	strcpy (ofile,Form("run18_3gev_ht_hist_pico_rotate_loose_6_centa%d_cut%d.root",choose_cent,_cut_mode));
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree_7/filelist.txt");
+//strcpy (ofile,Form("run18_3gev_ht_hist_pico_rotate_loose_6_centa%d_cut%d_b1.root",choose_cent,_cut_mode));
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree_7_clone/filelist.txt");
+//strcpy (ofile,Form("run18_3gev_ht_hist_pico_rotate_loose_6_centa%d_cut%d_b2.root",choose_cent,_cut_mode));
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree_7_clone2/filelist.txt");
+//strcpy (ofile,Form("run18_3gev_ht_hist_pico_rotate_loose_6_centa%d_cut%d_b3.root",choose_cent,_cut_mode));
+
+//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_ht_pico_rotate_tree_7_clone3/filelist.txt");
+//strcpy (ofile,Form("run18_3gev_ht_hist_pico_rotate_loose_6_centa%d_cut%d_b4.root",choose_cent,_cut_mode));
+
+
+//new pid
+	if(_batch==0){
+//   	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_tree_new/filelist.txt");
+//   	strcpy (ofile,Form("run18_3gev_3b_hist_pico_bdt_11_centa%d_cut%d.root",choose_cent,_cut_mode));
+
+//        fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_tree_new_2/filelist.txt");
+//        strcpy (ofile,Form("run18_3gev_3b_hist_pico_bdt_26_centa%d_cut%d.root",choose_cent,_cut_mode));//12: new finder
+
+//	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_tree/filelist.txt");
+fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_tree_new_5/filelist.txt");
+	
+	//strcpy (ofile,Form("run18_3gev_3b_hist_pico_bdt_33_centa%d_cut%d.root",choose_cent,_cut_mode));//30:onesided, 31:1sigma, 32: no cut
+	        strcpy (ofile,Form("run18_3gev_3b_hist_pico_bdt_61_centa%d_cut%d.root",choose_cent,_cut_mode));//30:onesided, 31:1sigma, 32: no cut//30b onesided, fix the weighting, 34:no cut, ptcut
+	      nChains = 1222;
+
+   	}
+	if(_batch==1){
+	//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_0/filelist.txt");
+        //strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_0_bdt_11_centa%d_cut%d.root",choose_cent,_cut_mode));
+
+	//fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_0_0_0/filelist.txt");//modified kfparticlefinder
+        //strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_0_bdt_26_centa%d_cut%d.root",choose_cent,_cut_mode));
+
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_rotate_pion/filelist.txt");
+	strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_0_bdt_61_centa%d_cut%d.root",choose_cent,_cut_mode));
+	              nChains = 1191;
+	}
+	if(_batch==2){
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_rotate_pion_1/filelist.txt");
+        strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_1_bdt_30_centa%d_cut%d.root",choose_cent,_cut_mode));
+	                      nChains = 964;
+	}
+        if(_batch==3){
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_rotate_pion_2/filelist.txt");
+        strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_2_bdt_30_centa%d_cut%d.root",choose_cent,_cut_mode));
+                              nChains = 543;
+	}
+        if(_batch==4){
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_rotate_pion_3/filelist.txt");
+        strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_3_bdt_30_centa%d_cut%d.root",choose_cent,_cut_mode));
+                              nChains = 544;
+	}
+        if(_batch==5){
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_rotate_pion_4/filelist.txt");        
+        strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_4_bdt_30_centa%d_cut%d.root",choose_cent,_cut_mode));
+                              nChains = 501;
+	}
+        if(_batch==6){
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_rotate_pion_5/filelist.txt");
+        strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_5_bdt_30_centa%d_cut%d.root",choose_cent,_cut_mode));
+		                              nChains = 1220;
+	}
+        if(_batch==7){
+        fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_rotate_pion_6/filelist.txt");
+        strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_6_bdt_30_centa%d_cut%d.root",choose_cent,_cut_mode));
+			                                              nChains =833;
+	}
+//	nChains = 1030;
+
+	if(_batch==-1){//for bg study
+//	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_0_0_0_rotate_pion/filelist.txt");
+//	strcpy (ofile,Form("run18_3gev_hl_hist_pico_rotate_pion_loose_8_centa%d_cut%d.root",choose_cent,_cut_mode));
+	//strcpy (ofile,Form("run18_3gev_hl_hist_pico_rotate_pion_19_loose_8_centa%d_cut%d.root",choose_cent,_cut_mode));
+	//strcpy (ofile,Form("run18_3gev_hl_hist_pico_rotate_pion_21_loose_8_centa%d_cut%d.root",choose_cent,_cut_mode));
+//	strcpy (ofile,Form("run18_3gev_hl_hist_pico_rotate_pion_26_loose_8_centa%d_cut%d.root",choose_cent,_cut_mode));
+//	nChains = 1071;
+
+fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_deuteron_5/filelist.txt");
+        strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_0_bdt_61_centa%d_cut%d.root",choose_cent,_cut_mode));//40 no pt cut
+      nChains = 1222;
+
+	}
+	if(_batch==-2){//for bg study
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_rotate_tree_pion_5/filelist.txt");
+	strcpy (ofile,Form("run18_3gev_3b_hist_pico_rotate_pion_51a_centa%d_cut%d.root",choose_cent,_cut_mode));
+	nChains = 1216;
+	}
+
+	}
+	if(_condor==2){//debug mode
+	fin.open("/star/u/yhleung2/pwg/33.standard_reco/taxi_3b_pico_tree_new_27gev/filelist.txt");
+	strcpy (ofile,"testrotate.root");
+	nChains = 7842;
+	}
+
+
+	for(int i=0; i<nChains; i++){
+      	fin >> path_ch;
+
+	htriton3_tree.Add(path_ch);
+	cout<<path_ch<<" "<<htriton3_tree.GetEntries() <<endl;
+	htriton3_mc_tree.Add(path_ch);
+	cout<<path_ch<<" "<<htriton3_mc_tree.GetEntries() <<endl;
+
+
+//the folllwoing needs to be reimplemented
+/*
+      TFile *f0 = new TFile(path_ch,"READ");
+      gvtx = (TH1F*)f0->Get("hvtx");
+      gvtxgood = (TH1F*)f0->Get("hvtxgood");
+      grefmult = (TH1F*)f0->Get("hrefmult");
+      frefmult = (TH1F*)f0->Get("wrefmult");
+
+if(i==0){
+ hvtx = (TH1F*)gvtx->Clone("hvtx");
+ hvtxgood = (TH1F*)gvtxgood->Clone("hvtxgood");
+ hrefmult = (TH1F*)grefmult->Clone("hrefmult");
+ wrefmult = (TH1F*)frefmult->Clone("wrefmult");
+}else{
+ hvtx ->Add(gvtx);
+ hvtxgood ->Add(gvtxgood);
+ hrefmult ->Add(grefmult);
+ wrefmult ->Add(frefmult);
+}
+*/
+}//ichain
+
+	cout << " done TChain-ing.. " << endl;
+
+	book_histo();
+
+	htriton3_tree.SetBranchAddress("brefmult",&brefmult);
+	htriton3_tree.SetBranchAddress("btofmult",&btofmult);
+	htriton3_tree.SetBranchAddress("bparticleid",&bparticleid);
+	htriton3_tree.SetBranchAddress("bparticlemass",&bparticlemass);
+	htriton3_tree.SetBranchAddress("bpx",&bpx);
+	htriton3_tree.SetBranchAddress("bpy",&bpy);
+	htriton3_tree.SetBranchAddress("bpz",&bpz);
+	htriton3_tree.SetBranchAddress("chi2primary_proton", &chi2primary_proton);
+	htriton3_tree.SetBranchAddress("chi2primary_pi", &chi2primary_pi);
+	htriton3_tree.SetBranchAddress("chi2primary_d", &chi2primary_d);
+
+htriton3_tree.SetBranchAddress("v_01_chi2primary", &v_01_chi2primary);
+ htriton3_tree.SetBranchAddress("v_02_chi2primary", &v_02_chi2primary);
+ htriton3_tree.SetBranchAddress("v_12_chi2primary", &v_12_chi2primary);
+
+htriton3_tree.SetBranchAddress("v_01_dca", &v_01_dca);
+htriton3_tree.SetBranchAddress("v_02_dca", &v_02_dca);
+htriton3_tree.SetBranchAddress("v_12_dca", &v_12_dca);
+
+htriton3_tree.SetBranchAddress("mass_01", &mass_01);
+htriton3_tree.SetBranchAddress("mass_02", &mass_02);
+htriton3_tree.SetBranchAddress("mass_12", &mass_12);
+
+	htriton3_tree.SetBranchAddress("bzdeuteron", &bzdeuteron);
+	htriton3_tree.SetBranchAddress("bpionnsigma", & bpionnsigma);
+	htriton3_tree.SetBranchAddress("bprotonsigma", & bprotonsigma);
+
+	htriton3_tree.SetBranchAddress("ht_chi2topo", &ht_chi2topo);
+	htriton3_tree.SetBranchAddress("ht_chi2ndf", &ht_chi2ndf);
+	htriton3_tree.SetBranchAddress("ht_ldl", &ht_ldl);
+	htriton3_tree.SetBranchAddress("ht_l", &ht_l);
+	htriton3_tree.SetBranchAddress("ht_dl", &ht_dl);
+	htriton3_tree.SetBranchAddress("dca_proton",&dca_proton);
+	htriton3_tree.SetBranchAddress("dca_pion",&dca_pion);
+	htriton3_tree.SetBranchAddress("dca_deuteron",&dca_deuteron);
+  htriton3_tree.SetBranchAddress("nhits_pion",&nhits_pion);
+  htriton3_tree.SetBranchAddress("nhits_deuteron",&nhits_deuteron);
+	htriton3_tree.SetBranchAddress("nhits_proton",&nhits_proton);
+	//htriton3_tree.SetBranchAddress("ht_bdfvtx",&ht_bdfvtx);
+	//htriton3_tree.SetBranchAddress("ht_bdfvtx2",&ht_bdfvtx2);
+	//htriton3_tree.SetBranchAddress("ht_lifetime",&ht_lifetime);
+	htriton3_tree.SetBranchAddress("countrefmult",&countrefmult);
+	htriton3_tree.SetBranchAddress("reweight", &reweight);
+	htriton3_tree.SetBranchAddress("cent9", &cent9);
+	htriton3_tree.SetBranchAddress("bismc", &bismc);
+
+	htriton3_tree.SetBranchAddress("bdpx", &bdpx);
+	htriton3_tree.SetBranchAddress("bdpy", &bdpy);
+	htriton3_tree.SetBranchAddress("bdpz", &bdpz);
+	htriton3_tree.SetBranchAddress("bpionpx", &bpionpx);
+	htriton3_tree.SetBranchAddress("bpionpy", &bpionpy);
+	htriton3_tree.SetBranchAddress("bpionpz", &bpionpz);
+	htriton3_tree.SetBranchAddress("bprotonpx", &bprotonpx);
+	htriton3_tree.SetBranchAddress("bprotonpy", &bprotonpy);
+	htriton3_tree.SetBranchAddress("bprotonpz", &bprotonpz);
+
+	htriton3_tree.SetBranchAddress("v_01_pvdca", &v_01_pvdca);
+  htriton3_tree.SetBranchAddress("v_02_pvdca", &v_02_pvdca);
+  htriton3_tree.SetBranchAddress("v_12_pvdca", &v_12_pvdca);
+  htriton3_tree.SetBranchAddress("ht_bdfvtx", &ht_bdfvtx);
+  htriton3_tree.SetBranchAddress("ht_bdfvtx2", &ht_bdfvtx2);
+
+	if(_condor==0){
+	//htriton3_tree.SetBranchAddress("bVzerr",&bVzerr);
+	htriton3_tree.SetBranchAddress("bmcpx",&bmcpx);
+	htriton3_tree.SetBranchAddress("bmcpy",&bmcpy);
+	htriton3_tree.SetBranchAddress("bmcpz",&bmcpz);
+
+htriton3_tree.SetBranchAddress("b0mcpx",&b0mcpx);
+htriton3_tree.SetBranchAddress("b0mcpy",&b0mcpy);
+htriton3_tree.SetBranchAddress("b0mcpz",&b0mcpz);
+htriton3_tree.SetBranchAddress("b1mcpx",&b1mcpx);
+htriton3_tree.SetBranchAddress("b1mcpy",&b1mcpy);
+htriton3_tree.SetBranchAddress("b1mcpz",&b1mcpz);
+htriton3_tree.SetBranchAddress("b2mcpx",&b2mcpx);
+htriton3_tree.SetBranchAddress("b2mcpy",&b2mcpy);
+htriton3_tree.SetBranchAddress("b2mcpz",&b2mcpz);
+
+
+	htriton3_tree.SetBranchAddress("bmcl",&bmcl);
+	htriton3_tree.SetBranchAddress("bmcpl",&bmcpl);
+	//htriton3_tree.SetBranchAddress("bpl",&bpl);
+	}
+	//htriton3_mc_tree.SetBranchAddress("brunid", &brunid);
+	htriton3_mc_tree.SetBranchAddress("brefmult", &brefmult);
+	htriton3_mc_tree.SetBranchAddress("bmcparticleid", &bmcparticleid);
+	htriton3_mc_tree.SetBranchAddress("bmcrawpx", &bmcrawpx);
+	htriton3_mc_tree.SetBranchAddress("bmcrawpy", &bmcrawpy);
+	htriton3_mc_tree.SetBranchAddress("bmcrawpz", &bmcrawpz);
+
+	htriton3_mc_tree.SetBranchAddress("b0mcrawpx", &b0mcrawpx);
+        htriton3_mc_tree.SetBranchAddress("b0mcrawpy", &b0mcrawpy);
+        htriton3_mc_tree.SetBranchAddress("b0mcrawpz", &b0mcrawpz);
+	htriton3_mc_tree.SetBranchAddress("b1mcrawpx", &b1mcrawpx);
+        htriton3_mc_tree.SetBranchAddress("b1mcrawpy", &b1mcrawpy);
+        htriton3_mc_tree.SetBranchAddress("b1mcrawpz", &b1mcrawpz);
+	htriton3_mc_tree.SetBranchAddress("b2mcrawpx", &b2mcrawpx);
+        htriton3_mc_tree.SetBranchAddress("b2mcrawpy", &b2mcrawpy);
+        htriton3_mc_tree.SetBranchAddress("b2mcrawpz", &b2mcrawpz);
+
+	htriton3_mc_tree.SetBranchAddress("bmcrawpl", &bmcrawpl);
+	htriton3_mc_tree.SetBranchAddress("reweight", &reweight);
+	htriton3_mc_tree.SetBranchAddress("countrefmult", &mccountrefmult);
+	htriton3_mc_tree.SetBranchAddress("cent9", &cent9);
+
+	Long64_t n_lambda_Entries = htriton3_tree.GetEntries();
+	Long64_t n_lambda_mc_Entries = htriton3_mc_tree.GetEntries();
+
+	cout<<endl<<"Start processing "<<endl<<endl;
+	cout<<"--------------------------------------------"<<endl;
+
+	cout<<"Total entries "<<n_lambda_Entries<< endl;
+
+	if(_cut_mode==0){//default
+	ht_chi2topo_cut = 5;
+	ht_chi2ndf_cut = 5;
+	//ht_ldl_cut = 5;//default
+	//ht_l_cut = 5;//defualt
+	chi2primary_proton_cut = 18.6;
+	chi2primary_pi_cut = 18.6;
+
+	hl_chi2topo_cut = 5;
+	hl_chi2ndf_cut = 5;
+	//hl_ldl_cut = 5;
+	//hl_l_cut = 5;
+	chi2primary_h4_cut = 18.6;
+	chi2primary_pi_cut = 18.6;
+	}
+
+	if( _cut_mode==1 || (_cut_mode>=11 && _cut_mode<20) ){//loose
+	ht_chi2topo_cut = 5;
+	ht_chi2ndf_cut = 5;
+	//ht_ldl_cut = 3;
+	//ht_l_cut = 1;
+	chi2primary_proton_cut = 3.0;
+	chi2primary_pi_cut = 3.0;
+
+	hl_chi2topo_cut = 5;
+	hl_chi2ndf_cut = 5;
+	//hl_ldl_cut = 3;
+	//hl_l_cut = 1;
+	chi2primary_h4_cut = 3.0;
+	chi2primary_pi_cut = 3.0;
+	}
+	//if(_cut_mode>=2 && _cut_mode<10){//scan
+	//ht_chi2topo_cut = 5;
+	//ht_chi2ndf_cut = 5;
+
+	//hl_chi2topo_cut = 5;
+	//hl_chi2ndf_cut = 5;
+
+	if(_cut_mode==2){
+	ht_chi2topo_cut = 3.;
+	hl_chi2topo_cut = 3.;
+	ht_chi2ndf_cut = 3;
+	hl_chi2ndf_cut = 3;
+	chi2primary_proton_cut = 3.;
+	chi2primary_pi_cut = 3.;
+	chi2primary_h4_cut = 3.;
+//	dca_proton_cut = 0.5;
+	}
+	if(_cut_mode==3){
+	ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 3.;
+        chi2primary_pi_cut = 3.;
+        chi2primary_h4_cut = 3.;
+        dca_proton_cut = 1.0;
+	}
+	if(_cut_mode==4){
+	ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 10;
+        chi2primary_pi_cut = 3.;
+        chi2primary_h4_cut = 3.;
+	}
+	if(_cut_mode==5){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 20.;
+        chi2primary_pi_cut = 3.;
+        chi2primary_h4_cut = 3.;
+        }	
+	if(_cut_mode==6){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 30.;
+        chi2primary_pi_cut = 3.;
+        chi2primary_h4_cut = 3.;
+        }
+	if(_cut_mode==7){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 40.;
+        chi2primary_pi_cut = 3.;
+        chi2primary_h4_cut = 3.;
+        }
+	if(_cut_mode==8){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 3.;
+        chi2primary_pi_cut = 3.;
+        chi2primary_h4_cut = 3.;
+	dca_proton_cut = 1.5;
+        }
+	if(_cut_mode==21){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 3.;
+        chi2primary_pi_cut = 20.;
+        chi2primary_h4_cut = 3.;
+        }
+	if(_cut_mode==22){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 3.;
+        chi2primary_pi_cut = 50.;
+        chi2primary_h4_cut = 3.;
+        }
+	if(_cut_mode==23){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 3.;
+        chi2primary_pi_cut = 100.;
+        chi2primary_h4_cut = 3.;
+        }
+	if(_cut_mode==24){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 3.;
+        chi2primary_pi_cut = 200.;
+        chi2primary_h4_cut = 3.;
+        }
+	if(_cut_mode==25){
+        ht_chi2topo_cut = 5.;
+        hl_chi2topo_cut = 5.;
+        ht_chi2ndf_cut = 5;
+        hl_chi2ndf_cut = 5;
+        chi2primary_proton_cut = 3.;
+        chi2primary_pi_cut = 300.;
+        chi2primary_h4_cut = 3.;
+        }
+
+
+cout<<"Start processing:"<<endl;
+	//n_lambda_Entries = 100000;
+	for (Long64_t iEntry = 0; iEntry<=n_lambda_Entries; iEntry++){
+
+	htriton3_tree.GetEntry(iEntry);
+  	if(iEntry%100000==0){
+    	cout<<"Processing entry:" <<iEntry<<endl;
+	}
+	int centtmva_label = -1;
+	int centbdt_label = -1;
+	cent_label = -1;
+	int pt_label = -1;
+
+	if(snn==28){//temp
+    	if(cent9==1) cent_label = 7;
+    	if(cent9==2) cent_label = 6;
+    	if(cent9==3) cent_label = 5;
+    	if(cent9==4) cent_label = 4;
+    	if(cent9==5) cent_label = 3;
+    	if(cent9==6) cent_label = 2;
+    	if(cent9==7) cent_label = 1;
+    	if(cent9==8) cent_label = 0;
+
+      	if(cent9==0) centbdt_label = 2;
+      	if(cent9==1) centbdt_label = 2;
+      	if(cent9==2) centbdt_label = 2;
+      	if(cent9==3) centbdt_label = 2;
+      	if(cent9==4) centbdt_label = 1;
+      	if(cent9==5) centbdt_label = 1;
+      	if(cent9==6) centbdt_label = 1;
+      	if(cent9==7) centbdt_label = 0;
+      	if(cent9==8) centbdt_label = 0;
+
+      	if(cent9==0) centtmva_label = 1;
+      	if(cent9==1) centtmva_label = 1;
+      	if(cent9==2) centtmva_label = 1;
+      	if(cent9==3) centtmva_label = 1;
+      	if(cent9==4) centtmva_label = 1;
+      	if(cent9==5) centtmva_label = 1;
+      	if(cent9==6) centtmva_label = 1;
+      	if(cent9==7) centtmva_label = 0;
+      		if(cent9==8) centtmva_label = 0;
+	}
+	if(snn==3){
+    		cent_label = Centrality(countrefmult);
+	}
+//if(_cent_off){
+//cent_label = 0;
+//centbdt_label = 0;
+//centtmva_label = 0;
+//}
+
+
+  	if(cent_label<0) continue;//<=5refmult
+
+   	if(cent_label<7 && choose_cent==1) continue;//cent7,8
+   	if( (cent_label>6 || cent_label<2) && choose_cent==2) continue;//cent2,3,4,5,6
+
+	if(snn==3){
+  		ycm = -1.045;
+	}else{
+  		ycm = -999.;
+	}
+
+
+ 	mass_lo = 2.988;
+ 	mass_hi = 2.998;
+
+//	mass_lo = 2.988-0.01;
+//        mass_hi = 2.998-0.01;
+
+//	mass_lo = 3.01;
+//        mass_hi = 3.02;
+
+// 	mass_lo = 2.97;
+//        mass_hi = 2.98;
+
+   	bpt = sqrt(bpx*bpx+bpy*bpy);
+//  bp = 0.5*sqrt(bpx*bpx+bpy*bpy+bpz*bpz);
+  	bp = sqrt(bpx*bpx+bpy*bpy+bpz*bpz);
+   	_rotate = 0;
+
+
+	TLorentzVector ptc(bpx,bpy,bpz,sqrt(bpx*bpx+bpy*bpy+bpz*bpz+bparticlemass*bparticlemass));
+  	beta = ptc.Eta(); 
+  	brap = ptc.Rapidity() - ycm;
+
+//bdpx
+//bdpy
+//bdpz
+TLorentzVector ptc_pion(bpionpx,bpionpy,bpionpz,sqrt(bpionpx*bpionpx+bpionpy*bpionpy+bpionpz*bpionpz+0.13957018*0.13957018));
+TLorentzVector ptc_proton(bprotonpx,bprotonpy,bprotonpz,sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy+bprotonpz*bprotonpz+0.93827208816*0.93827208816));
+TLorentzVector ptc_lambda = ptc_pion + ptc_proton;
+
+// TLorentzVector mcptc(bmcpx,bmcpy,bmcpz,sqrt(bmcpx*bmcpx+bmcpy*bmcpy+bmcpz*bmcpz+ht_mass*ht_mass));	
+// bmcrap = mcptc.Rapidity() - ycm; 
+
+    	double betaxgamma;
+    	betaxgamma = sqrt(bpx*bpx+bpy*bpy+bpz*bpz)/bparticlemass;
+    	double ht_pl;
+    	ht_pl = ht_l/betaxgamma;
+
+
+//if(v_12_chi2primary<5) continue;
+//if(v_12_chi2primary<10) continue;
+
+//if(nhits_deuteron<30) continue;
+//if(nhits_proton<30) continue;
+	
+
+	//deuteron pid
+	//if(bzdeuteron<0.) continue;
+        //if(bzdeuteron>0.2) continue;
+
+	//if(bzdeuteron<0.1) continue;
+        //if(bzdeuteron>0.3) continue;
+
+	if(bzdeuteron<-0.2) continue;
+        if(bzdeuteron>0.2) continue;
+	
+	//proton pid
+	//if(bprotonsigma>2) continue;
+
+	//place cut here
+	if(chi2primary_proton<chi2primary_proton_cut || chi2primary_pi<chi2primary_pi_cut) continue;
+	if(ht_chi2topo>ht_chi2topo_cut) continue;
+	if(ht_chi2ndf>ht_chi2ndf_cut) continue;
+	//if( (_cut_mode==2 || _cut_mode==3 || _cut_mode==8) && dca_proton<dca_proton_cut) continue;
+
+	if(ht_pl>50) continue;//no signal for ht_pl<6
+	if(ht_pl<6) continue;//no signal for ht_pl<6
+
+	//TODO
+	//if(ht_pl<18) continue;//no signal for ht_pl<6
+	//TODO
+	//if(ht_pl>14) continue;//no signal for ht_pl<6
+	//TODO
+	//if(ht_pl<26) continue;//no signal for ht_pl<6
+	//TODO
+        //if(ht_pl>18) continue;//no signal for ht_pl<6
+
+	if(bparticlemass>mass_lo && bparticlemass<mass_hi){
+	h_pt->Fill(brap,bpt);
+	h_r_pt->Fill(-brap,bpt);
+	}
+//	if(bpt<1.6 || bpt>4.0) continue;
+
+//	        if(ht_pl<16) continue;//no signal for ht_pl<6
+
+//fiducial cut
+
+	//h_lambda->Fill(ptc_lambda.M());
+
+	//if(ptc_lambda.M()>1.11568-0.006&&ptc_lambda.M()<1.11568+0.006) continue;//17
+	//if(ptc_lambda.M()>1.11568-0.007&&ptc_lambda.M()<1.11568+0.009) continue;//17
+
+//	if(ptc_lambda.M()>1.11568-0.007) continue;//19
+	
+
+
+	//if(ptc_lambda.M()>1.11568-0.006) continue;//19
+	//if(ptc_lambda.M()>1.11568-0.0015) continue;//19
+	//
+//	if(ptc_lambda.M()<1.11568-0.0015) continue;//reverse
+
+	if(bparticleid==103004 && ((bismc==1&&_condor==0) || _condor==1 || _condor==2) ){
+	//if(bparticleid==3004 && ( _condor==1 || _condor==2) ){
+
+if((_cut_mode<11 || _cut_mode>20 /*&& _cut_mode!=12 && _cut_mode!=13 */) || mvaValue>mvaCut){
+              h_mass_pt->Fill(bparticlemass,brap,bpt);
+                                      }
+	if(bparticlemass>mass_lo && bparticlemass<mass_hi && !_condor==0){
+
+	h_lambda->Fill(ptc_lambda.M());
+}
+
+
+         if(!_condor==0){
+if(bpt>3.0) continue;
+if(brap>0.95) continue;
+if( brap>0.55  &&  bpt < 3.9*(brap-0.45)*(brap-0.45)+0.65) continue;
+if( brap<0.55  &&  bpt < 1.9*(brap-0.65)*(brap-0.65)+0.67) continue;
+}
+
+        if(bparticlemass>mass_lo && bparticlemass<mass_hi && !_condor==0){
+
+	h_chi2primary_proton->Fill(beta,bpt,chi2primary_proton);
+	h_chi2primary_pi->Fill(beta,bpt,chi2primary_pi);
+	h_chi2primary_deuteron->Fill(beta,bpt,chi2primary_d);
+
+	 h_pt_proton->Fill(beta,bpt, sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy) );
+         h_pt_pion->Fill(beta,bpt, sqrt(bpionpx*bpionpx+bpionpy*bpionpy) );
+         h_pt_deuteron->Fill(beta,bpt, sqrt(bdpx*bdpx+bdpy*bdpy) );
+
+h_v_01_pvdca->Fill(beta,bpt,v_01_pvdca);
+h_v_02_pvdca->Fill(beta,bpt,v_02_pvdca);
+h_v_12_pvdca->Fill(beta,bpt,v_12_pvdca);
+h_ht_bdfvtx->Fill(beta,bpt,ht_bdfvtx);
+h_ht_bdfvtx2->Fill(beta,bpt,ht_bdfvtx2);
+
+h_v_01_chi2primary->Fill(beta,bpt,v_01_chi2primary);
+h_v_02_chi2primary->Fill(beta,bpt,v_02_chi2primary);
+h_v_12_chi2primary->Fill(beta,bpt,v_12_chi2primary);
+
+h_v_01_dca->Fill(beta,bpt, v_01_dca);
+h_v_02_dca->Fill(beta,bpt, v_02_dca);
+h_v_12_dca->Fill(beta,bpt, v_12_dca);
+
+h_mass_01->Fill(beta,bpt, mass_01);
+h_mass_02->Fill(beta,bpt, mass_02);
+h_mass_12->Fill(beta,bpt, mass_12);
+
+	h_nhits_proton->Fill(beta,bpt,nhits_proton);
+	h_nhits_pion->Fill(beta,bpt,nhits_pion);
+	h_nhits_deuteron->Fill(beta,bpt,nhits_deuteron);
+	h_ht_ldl->Fill(beta,bpt,ht_ldl);
+	h_ht_l->Fill(beta,bpt,ht_l);
+	h_ht_dl->Fill(beta,bpt,ht_dl);
+	h_ht_chi2topo->Fill(beta,bpt,ht_chi2topo);
+	h_ht_chi2ndf->Fill(beta,bpt,ht_chi2ndf);
+	h_ht_dca_proton->Fill(beta,bpt,dca_proton);
+	h_ht_dca_pion->Fill(beta,bpt,dca_pion);
+	h_ht_dca_deuteron->Fill(beta,bpt,dca_deuteron);
+	h_eta->Fill(beta,bpt);
+	h_rap->Fill(brap,bpt);
+	h_ht_bdfvtx->Fill(beta,bpt,ht_bdfvtx);
+	h_ht_bdfvtx2->Fill(beta,bpt,ht_bdfvtx2);
+	h_ht_lifetime->Fill(beta,bpt,ht_lifetime);
+
+	h_cent->Fill(cent_label);
+	}
+
+	h_mass_qa->Fill(beta,bpt,bparticlemass);
+
+	if(_cut_mode>=11 && _cut_mode<20 /*|| _cut_mode==12 || _cut_mode==13*/){
+
+		for(int ipt=0;ipt<nptbins;ipt++){
+		if(ht_pl>ptbin[ipt]) pt_label = ipt;
+		}
+		if(_cut_mode>=11 /*|| _cut_mode==12 || _cut_mode==13*/){
+		mvaValue = reader[pt_label]->EvaluateMVA( "BDT" );
+		}
+//		if(_cut_mode==13){
+//                mvaValue = reader[1]->EvaluateMVA( "BDT" );
+//		}
+		mvaCut = bdt_ht_cut[pt_label];
+		if(_cut_mode==12){mvaCut+=delta_bdtscan;}
+		if(_cut_mode==13){mvaCut-=delta_bdtscan;}
+		if(_cut_mode==14){mvaCut-=0.2;}
+		if(_cut_mode==15){mvaCut-=0.3;}
+	        if(_cut_mode==16){mvaCut-=0.1;}
+	        if(_cut_mode==17){mvaCut+=0.1;}
+
+
+//		cout<<"pt_label:"<<pt_label<< " "<<mvaValue<<" "<<mvaCut<<endl;
+		if( bparticlemass>mass_lo && bparticlemass<mass_hi && !_condor==0 && _cut_mode==11 ){h_ht_bdt->Fill(beta,bpt,mvaValue);}
+	}	
+
+	if((_cut_mode<11 || _cut_mode>20 /*&& _cut_mode!=12 && _cut_mode!=13 */) || mvaValue>mvaCut){
+		h_mass_pl->Fill(bparticlemass,brap,ht_pl);
+	}
+
+	if(bismc==1&&_condor==0){
+
+ 	TLorentzVector mcptc(bmcpx,bmcpy,bmcpz,sqrt(bmcpx*bmcpx+bmcpy*bmcpy+bmcpz*bmcpz+ht_mass*ht_mass));
+	 bmcrap = mcptc.Rapidity() - ycm;
+
+     	float mc_weight;
+     	mc_weight = 1./g_pt_fine_in->GetBinContent(g_pt_fine_in->FindBin(bmcrap,sqrt(bmcpx*bmcpx+bmcpy*bmcpy)));
+
+TLorentzVector mcptc_pion(b0mcpx,b0mcpy,b0mcpz,sqrt(b0mcpx*b0mcpx+b0mcpy*b0mcpy+b0mcpz*b0mcpz+0.13957018*0.13957018));
+TLorentzVector mcptc_proton(b1mcpx,b1mcpy,b1mcpz,sqrt(b1mcpx*b1mcpx+b1mcpy*b1mcpy+b1mcpz*b1mcpz+0.93827208816*0.93827208816));
+TLorentzVector mcptc_lambda = mcptc_pion + mcptc_proton;
+
+	float lambda_weight;
+	//if(ptc_lambda.M()>1.11583-1*4.01078e-03 && ptc_lambda.M()<1.11583+1*4.01078e-03) lambda_weight=1;
+	if(mcptc_lambda.M()>1.11583-1*4.01078e-03 && mcptc_lambda.M()<1.11583+1*4.01078e-03) lambda_weight=1;
+	else lambda_weight=0;
+
+
+
+     	float rap_weight;
+     	float pt_weight;
+	float cent_weight;
+
+        cent_weight = r_cent[cent_label];
+
+	if(_wgt==0){
+	rap_weight=1.;
+	pt_weight = 1.;
+	}else if(_wgt==1){
+     	rap_weight = t_quadr->Eval(bmcrap);
+     	pt_weight = bolt1->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy));
+	}else if(_wgt==2){
+     	rap_weight = t_quadr0->Eval(bmcrap);
+     	pt_weight =bolt0->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy));
+	}else if(_wgt==3){
+	//if(fabs(bmcrap)>0.25){
+  //rap_weight = 1;
+	//}else{
+	//rap_weight = 0;
+	//}
+	rap_weight = 1;
+    	pt_weight =bolt0->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy));
+	}else if(_wgt==4){
+     	rap_weight = t_quadr0->Eval(bmcrap);
+     	pt_weight =bolt1->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy));
+	}else if(_wgt==5){
+     	rap_weight = t_quadr0->Eval(bmcrap);
+     	pt_weight =bolt2->Eval(sqrt(bmcpx*bmcpx+bmcpy*bmcpy));
+	}
+
+  weight = rap_weight*pt_weight;
+  weight *= mc_weight;
+	weight *= cent_weight;
+	
+	weight *=lambda_weight;
+
+  if((_cut_mode<11 || _cut_mode>20/*&& _cut_mode!=12 && _cut_mode!=13*/) || mvaValue>mvaCut){
+	
+	h_mass_pt_wgt->Fill(bparticlemass,brap,bpt,weight);
+	}
+
+
+	//if(bparticleid==3004 && (bismc==1&&_condor==0) && bVzerr>0.00000001 ){
+	if(bparticleid==103004 && (bismc==1&&_condor==0) ){
+	if(bparticlemass>mass_lo && bparticlemass<mass_hi){
+
+
+
+        h_lambda->Fill(ptc_lambda.M(),weight);
+}
+}
+
+
+if(bpt>3.0) continue;
+if(brap>0.95) continue;
+if( brap>0.55  &&  bpt < 3.9*(brap-0.45)*(brap-0.45)+0.65) continue;
+if( brap<0.55  &&  bpt < 1.9*(brap-0.65)*(brap-0.65)+0.67) continue;
+
+
+if((_cut_mode<11 || _cut_mode>20/*&& _cut_mode!=12 && _cut_mode!=13*/) || mvaValue>mvaCut){
+        h_mass_pl_wgt->Fill(bparticlemass,brap,ht_pl,weight);
+}
+
+if(bparticleid==103004 && (bismc==1&&_condor==0) ){
+        if(bparticlemass>mass_lo && bparticlemass<mass_hi){
+
+	h_chi2primary_proton->Fill(beta,bpt,chi2primary_proton,weight);
+	h_chi2primary_pi->Fill(beta,bpt,chi2primary_pi,weight);
+	h_chi2primary_deuteron->Fill(beta,bpt,chi2primary_d,weight);
+
+h_pt_proton->Fill(beta,bpt, sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy),weight );
+h_pt_pion->Fill(beta,bpt, sqrt(bpionpx*bpionpx+bpionpy*bpionpy),weight );
+h_pt_deuteron->Fill(beta,bpt, sqrt(bdpx*bdpx+bdpy*bdpy),weight );
+
+h_v_01_pvdca->Fill(beta,bpt,v_01_pvdca,weight);
+h_v_02_pvdca->Fill(beta,bpt,v_02_pvdca,weight);
+h_v_12_pvdca->Fill(beta,bpt,v_12_pvdca,weight);
+h_ht_bdfvtx->Fill(beta,bpt,ht_bdfvtx,weight);
+h_ht_bdfvtx2->Fill(beta,bpt,ht_bdfvtx2,weight);
+
+h_v_01_chi2primary->Fill(beta,bpt,v_01_chi2primary,weight);
+h_v_02_chi2primary->Fill(beta,bpt,v_02_chi2primary,weight);
+h_v_12_chi2primary->Fill(beta,bpt,v_12_chi2primary,weight);
+
+h_v_01_dca->Fill(beta,bpt, v_01_dca,weight);
+h_v_02_dca->Fill(beta,bpt, v_02_dca,weight);
+h_v_12_dca->Fill(beta,bpt, v_12_dca,weight);
+
+h_mass_01->Fill(beta,bpt, mass_01,weight);
+h_mass_02->Fill(beta,bpt, mass_02,weight);
+h_mass_12->Fill(beta,bpt, mass_12,weight);
+
+
+
+	h_nhits_proton->Fill(beta,bpt,nhits_proton,weight);
+	h_nhits_pion->Fill(beta,bpt,nhits_pion,weight);
+	h_nhits_deuteron->Fill(beta,bpt,nhits_deuteron,weight);
+	h_ht_ldl->Fill(beta,bpt,ht_ldl,weight);
+	h_ht_l->Fill(beta,bpt,ht_l,weight);
+	h_ht_dl->Fill(beta,bpt,ht_dl,weight);
+	h_ht_chi2topo->Fill(beta,bpt,ht_chi2topo,weight);
+	h_ht_chi2ndf->Fill(beta,bpt,ht_chi2ndf,weight);
+	h_ht_dca_proton->Fill(beta,bpt,dca_proton,weight);
+	h_ht_dca_pion->Fill(beta,bpt,dca_pion,weight);
+	h_ht_dca_deuteron->Fill(beta,bpt,dca_deuteron,weight);
+	h_eta->Fill(beta,bpt,weight);
+	h_rap->Fill(brap,bpt,weight);
+	h_ht_bdfvtx->Fill(beta,bpt,ht_bdfvtx,weight);
+	h_ht_bdfvtx2->Fill(beta,bpt,ht_bdfvtx2,weight);
+	h_ht_lifetime->Fill(beta,bpt,ht_lifetime,weight);
+	h_cent->Fill(cent_label,cent_weight);
+
+	if(_cut_mode==11){
+		h_ht_bdt->Fill(beta,bpt,mvaValue,weight);
+		}
+	}
+}
+
+}
+
+
+
+if(_condor==0){
+	h_p_mc->Fill(bp,sqrt(bmcpx*bmcpx+bmcpy*bmcpy+bmcpz*bmcpz));
+	h_pt_mc->Fill(bpt,sqrt(bmcpx*bmcpx+bmcpy*bmcpy));
+	h_l_mc->Fill(ht_l,bmcl);
+	h_pl_mc->Fill(ht_pl,bmcpl);
+	h_lt_mc->Fill(ht_lifetime,bmcpl);
+
+	g_p_mc->Fill(bp,bp-sqrt(bmcpx*bmcpx+bmcpy*bmcpy+bmcpz*bmcpz));
+	g_pt_mc->Fill(bpt,bpt-sqrt(bmcpx*bmcpx+bmcpy*bmcpy));
+	g_l_mc->Fill(ht_l,ht_l-bmcl);
+	g_pl_mc->Fill(ht_pl,ht_pl-bmcpl);
+	g_lt_mc->Fill(ht_lifetime,ht_lifetime-bmcpl);
+}
+
+
+}//bparticleid loop
+
+}//entry loop
+
+for (Long64_t iEntry = 0; iEntry<=n_lambda_mc_Entries; iEntry++){
+
+                 htriton3_mc_tree.GetEntry(iEntry);
+           if(iEntry%100000==0){
+             cout<<"Processing mc entry:" <<iEntry<<endl;
+         }
+
+if(bmcparticleid!=103004) continue;
+
+cent_label=-1;
+if(snn==3){
+      cent_label = Centrality(mccountrefmult);
+  }
+     if(cent_label<0) continue;//<=5refmult
+     if(cent_label<7 && choose_cent==1) continue;//cent7,8,9
+     if( (cent_label>6 || cent_label<2) && choose_cent==2) continue;//cent2,3,4,5,6
+
+       
+
+         bpt = sqrt(bmcrawpx*bmcrawpx+bmcrawpy*bmcrawpy);
+
+       if(bpt<1.6 || bpt>4.0) continue;
+
+         TLorentzVector ptc(bmcrawpx,bmcrawpy,bmcrawpz,sqrt(bmcrawpx*bmcrawpx+bmcrawpy*bmcrawpy+bmcrawpz*bmcrawpz+ht_mass*ht_mass));
+         beta = ptc.Eta();
+         brap = ptc.Rapidity() - ycm;
+
+	double betaxgamma;
+	betaxgamma = sqrt(bmcrawpx*bmcrawpx+bmcrawpy*bmcrawpy+bmcrawpz*bmcrawpz)/ht_mass;
+	double ht_pl;
+	//ht_pl = bmcrawpl/betaxgamma;
+	ht_pl = bmcrawpl;
+        g_pt->Fill(brap,bpt);
+	g_pt_fine->Fill(brap,bpt);
+        g_pt_fine2->Fill(brap,bpt);
+
+//fiducial cut
+
+	float mc_weight;
+     	mc_weight = 1./g_pt_fine_in->GetBinContent(g_pt_fine_in->FindBin(brap,bpt));
+
+
+	float rap_weight;
+	float pt_weight;
+	float cent_weight;
+	float lambda_weight;
+
+	TLorentzVector mcptc_pion(b0mcrawpx,b0mcrawpy,b0mcrawpz,sqrt(b0mcrawpx*b0mcrawpx+b0mcrawpy*b0mcrawpy+b0mcrawpz*b0mcrawpz+0.13957018*0.13957018));
+        TLorentzVector mcptc_proton(b1mcrawpx,b1mcrawpy,b1mcrawpz,sqrt(b1mcrawpx*b1mcrawpx+b1mcrawpy*b1mcrawpy+b1mcrawpz*b1mcrawpz+0.93827208816*0.93827208816));
+        TLorentzVector mcptc_lambda = mcptc_pion + mcptc_proton;
+
+
+        //if(mcptc_lambda.M()>1.11583-2*4.01078e-03 && mcptc_lambda.M()>1.11583+2*4.01078e-03) lambda_weight=ld_gaus->Eval(mcptc_lambda.M());
+        if(mcptc_lambda.M()>1.11583-1*4.01078e-03 && mcptc_lambda.M()<1.11583+1*4.01078e-03) lambda_weight=1;
+        else lambda_weight=0;
+
+	cent_weight = r_cent[cent_label];
+
+if(_wgt==0){
+	rap_weight=1.;
+	pt_weight = 1.;
+}else if(_wgt==1){
+     	rap_weight = t_quadr->Eval(brap);
+     	pt_weight = bolt1->Eval(bpt);
+}else if(_wgt==2){
+     	rap_weight = t_quadr0->Eval(brap);
+     	pt_weight =bolt0->Eval(bpt);
+}else if(_wgt==3){
+	//if(fabs(brap)>0.25){
+     	rap_weight=1;
+	//}else{
+	//rap_weight=0;
+	//}
+     	pt_weight =bolt0->Eval(bpt);
+}else if(_wgt==4){
+     	rap_weight = t_quadr0->Eval(brap);
+     	pt_weight = bolt1->Eval(bpt);
+}else if(_wgt==5){
+     	rap_weight = t_quadr0->Eval(brap);
+     	pt_weight = bolt2->Eval(bpt);
+}
+
+
+     	weight = rap_weight*pt_weight;
+     	weight *= mc_weight;
+	weight *= cent_weight;
+
+	weight *=lambda_weight;
+	
+	g_pt_wgt->Fill(brap,bpt,weight);
+	g_pt_fine_wgt->Fill(brap,bpt,weight);
+	g_pt_fine2_wgt->Fill(brap,bpt,weight);
+
+
+        g_lambda->Fill(mcptc_lambda.M(),weight);
+
+if( bpt>3.0) continue;
+if( brap>0.95) continue;
+if( brap>0.55  &&  bpt < 3.9*(brap-0.45)*(brap-0.45)+0.65) continue;
+if( brap<0.55  &&  bpt < 1.9*(brap-0.65)*(brap-0.65)+0.67) continue;
+
+
+         g_eta->Fill(beta, bpt);
+         g_pl->Fill(brap,ht_pl);
+        g_pl_wgt->Fill(brap,ht_pl,weight);
+
+         }
+
+write_histo();
+
+}
+
+void book_histo()
+{
+cout<<"Start booking histograms"<<endl;
+
+  h_dedx_p = new TH2F("h_dedx_p","",500,0,5,2000,0,100);
+  h_dedx_p->Sumw2();
+
+  h_mass_pt = new TH3F("h_mass_pt","",1000,2.5,3.5,1,0,0.8,50,0,5);
+  h_mass_pl = new TH3F("h_mass_pl","",1000,2.5,3.5,10,-1.0,1.0,500,0,100);
+
+  h_mass_pt_wgt = new TH3F("h_mass_pt_wgt","",1000,2.5,3.5,2,0,0.8,50,0,5);
+  h_mass_pl_wgt = new TH3F("h_mass_pl_wgt","",1000,2.5,3.5,10,-1.0,1.0,500,0,100);
+
+  h_mass_qa = new TH3F("h_mass_qa","",10,-2.0,0.0,50,0,5,1000,2.5,3.5);
+  h_chi2primary_proton = new TH3F("h_chi2primary_proton","",10,-2.0,0.0,50,0,5,2000,0,2000);
+  h_chi2primary_pi = new TH3F("h_chi2primary_pi","",10,-2.0,0.0,50,0,5,20000,0,20000);
+  h_chi2primary_deuteron = new TH3F("h_chi2primary_deuteron","",10,-2.0,0.0,50,0,5,2000,0,2000);
+
+h_pt_proton = new TH3F("h_pt_proton","",10,-2.0,0.0,50,0,5,100,0,5);
+h_pt_pion = new TH3F("h_pt_pion","",10,-2.0,0.0,50,0,5,100,0,5);
+h_pt_deuteron = new TH3F("h_pt_deuteron","",10,-2.0,0.0,50,0,5,100,0,5);
+
+h_v_01_chi2primary = new TH3F("h_v_01_chi2primary","",10,-2.0,0.0,50,0,5,2000,0,2000);
+h_v_02_chi2primary = new TH3F("h_v_02_chi2primary","",10,-2.0,0.0,50,0,5,2000,0,2000);
+h_v_12_chi2primary = new TH3F("h_v_12_chi2primary","",10,-2.0,0.0,50,0,5,2000,0,2000);
+h_v_01_dca= new TH3F("h_v_01_dca","",10,-2.0,0.0,50,0,5,500,0,50);
+h_v_02_dca= new TH3F("h_v_02_dca","",10,-2.0,0.0,50,0,5,500,0,50);
+h_v_12_dca= new TH3F("h_v_12_dca","",10,-2.0,0.0,50,0,5,500,0,50);
+
+h_mass_01=new TH3F("h_mass_01","",10,-2.0,0.0,50,0,5,1000,1,2);
+h_mass_02=new TH3F("h_mass_02","",10,-2.0,0.0,50,0,5,1000,2,3);
+h_mass_12=new TH3F("h_mass_12","",10,-2.0,0.0,50,0,5,1000,2.5,3.5);
+
+
+    h_ht_ldl = new TH3F("h_ht_ldl","",10,-2.0,0.0,50,0,5,1000,0,200);
+  h_ht_l = new TH3F("h_ht_l","",10,-2.0,0.0,50,0,5,1000,0,200);
+  h_ht_dl = new TH3F("h_ht_dl","",10,-2.0,0.0,50,0,5,500,0,20);
+  h_ht_chi2topo = new TH3F("h_ht_chi2topo","",10,-2.0,0.0,50,0,5,500,0,10);
+  h_ht_chi2ndf = new TH3F("h_ht_chi2ndf","",10,-2.0,0.0,50,0,5,100,0,10);
+  h_nhits_proton = new TH3F("h_nhits_proton","",10,-2.0,0.0,50,0,5,80,0,80);
+  h_nhits_pion = new TH3F("h_nhits_pion","",10,-2.0,0.0,50,0,5,80,0,80);
+  h_nhits_deuteron = new TH3F("h_nhits_deuteron","",10,-2.0,0.0,50,0,5,80,0,80);
+
+  h_ht_dca_proton = new TH3F("h_ht_dca_proton","",10,-2.0,0.0,50,0,5,200,0,20);
+  h_ht_dca_pion     = new TH3F("h_ht_dca_pion","",10,-2.0,0.0,50,0,5,200,0,20);
+  h_ht_dca_deuteron   = new TH3F("h_ht_dca_deuteron","",10,-2.0,0.0,50,0,5,200,0,20);
+
+h_v_01_pvdca = new TH3F("h_v_01_pvdca","",10,-2.0,0.0,50,0,5,500,0,10);
+h_v_02_pvdca = new TH3F("h_v_02_pvdca","",10,-2.0,0.0,50,0,5,500,0,10);
+h_v_12_pvdca = new TH3F("h_v_12_pvdca","",10,-2.0,0.0,50,0,5,500,0,10);
+h_ht_bdfvtx =  new TH3F("h_ht_bdfvtx","",10,-2.0,0.0,50,0,5,500,0,10);
+h_ht_bdfvtx2 = new TH3F("h_ht_bdfvtx2","",10,-2.0,0.0,50,0,5,500,0,10);
+
+
+  h_ht_bdfvtx = new TH3F("h_ht_bdfvtx","",10,-2.0,0.0,50,0,5,1000,0,5);
+  h_ht_bdfvtx2 = new TH3F("h_ht_bdfvtx2","",10,-2.0,0.0,50,0,5,1000,0,1);
+  h_ht_lifetime = new TH3F("h_ht_lifetime","",10,-2.0,0.0,50,0,5,500,0,100);
+
+  h_ht_bdt = new TH3F("h_ht_bdt","",10,-2.0,0.0,50,0,5,200,-1.,1.);
+  h_cent = new TH1F("h_cent","", 9,0,9);
+
+  h_lambda = new TH1F("h_lambda","",1000,1,2);
+  g_lambda = new TH1F("g_lambda","",1000,1,2);
+
+  h_bnhits = new TH3F("h_bnhits","",10,-2.0,0.0,50,0,5,70,0,70);
+  h_bdedx = new TH3F("h_bdedx","",10,-2.0,0.0,50,0,5,100,0,100);
+  h_pt = new TH2F("h_pt","",100,-1.5,1.5,100,0,10);
+  h_r_pt = new TH2F("h_r_pt","",100,-1.5,1.5,100,0,10);
+  h_eta = new TH2F("h_eta","",200,-2.5,0.5,100,0,10);
+  h_rap = new TH2F("h_rap","",200,-1.5,1.5,100,0,10);
+  h_dca = new TH3F("h_dca","",10,-2.0,0.0,50,0,5,500,0,20);
+  g_pt = new TH2F("g_pt","",1,0,0.8,50,0,5);
+  g_pl = new TH2F("g_pl","",10,-1.0,1.0,500,0,100);
+  g_pt_fine = new TH2F("g_pt_fine","",100,-1.0,1.0,50,0,5);
+  g_pt_fine2 = new TH2F("g_pt_fine2","",20,-1.0,1.0,50,0,5);
+  g_pt_fine_wgt = new TH2F("g_pt_fine_wgt","",100,-1.0,1.0,50,0,5);
+  g_pt_fine2_wgt = new TH2F("g_pt_fine2_wgt","",20,-1.0,1.0,50,0,5);
+
+  g_pt_wgt = new TH2F("g_pt_wgt","",2,0,0.8,50,0,5);
+  g_pl_wgt = new TH2F("g_pl_wgt","",10,-1.0,1.0,500,0,100);
+
+  g_eta = new TH2F("g_eta","",50,-2.5,0.5,50,0,5);
+
+  h_p_mc = new TH2F("h_p_mc","",1000,0,10,1000,0,10);
+  h_pt_mc = new TH2F("h_pt_mc","",1000,0,10,1000,0,10);
+  h_l_mc = new TH2F("h_l_mc","",1000,0,100,1000,0,100);
+  h_pl_mc = new TH2F("h_pl_mc","",1000,0,100,1000,0,100);
+  h_lt_mc = new TH2F("h_lt_mc","",1000,0,100,1000,0,100);
+
+  g_p_mc = new TH2F("g_p_mc","",1000,0,10,1000,-10,10);
+  g_pt_mc = new TH2F("g_pt_mc","",1000,0,10,1000,-10,10);
+  g_l_mc = new TH2F("g_l_mc","",1000,0,100,1000,-100,100);
+  g_pl_mc = new TH2F("g_pl_mc","",1000,0,100,1000,-100,100);
+  g_lt_mc = new TH2F("g_lt_mc","",1000,0,100,1000,-100,100);
+
+  g_pt_wgt->Sumw2();
+  g_pl_wgt->Sumw2();
+  h_mass_pt_wgt->Sumw2();
+  h_mass_pl_wgt->Sumw2();
+  h_mass_pt->Sumw2();
+  h_mass_pl->Sumw2();
+
+h_v_01_pvdca->Sumw2();
+h_v_02_pvdca->Sumw2();
+h_v_12_pvdca->Sumw2();
+h_ht_bdfvtx->Sumw2();
+h_ht_bdfvtx2->Sumw2();
+
+h_pt_proton ->Sumw2();
+h_pt_pion ->Sumw2();
+h_pt_deuteron->Sumw2();
+
+  h_ht_bdfvtx->Sumw2();
+  h_ht_bdfvtx2->Sumw2();
+  h_ht_lifetime->Sumw2();
+  h_lt_mc->Sumw2();
+  g_lt_mc->Sumw2();
+
+  h_ht_dca_proton->Sumw2();
+  h_ht_dca_pion->Sumw2();
+  h_ht_dca_deuteron->Sumw2();
+  h_mass_qa->Sumw2();
+  h_chi2primary_proton ->Sumw2();
+  h_chi2primary_deuteron ->Sumw2();
+  h_chi2primary_pi ->Sumw2();
+
+h_v_01_chi2primary->Sumw2();
+h_v_02_chi2primary->Sumw2();
+h_v_12_chi2primary->Sumw2();
+h_v_01_dca->Sumw2();
+h_v_02_dca->Sumw2();
+h_v_12_dca->Sumw2();
+
+h_mass_01->Sumw2();
+h_mass_02->Sumw2();
+h_mass_12->Sumw2();
+
+
+  h_bnhits ->Sumw2();
+  h_bdedx ->Sumw2();
+  h_dca ->Sumw2();
+  h_pt->Sumw2();
+  h_r_pt->Sumw2();
+  g_pt->Sumw2();
+  g_eta->Sumw2();
+  h_mass_pl->Sumw2();
+  h_ht_chi2topo->Sumw2();
+  h_ht_ldl->Sumw2();
+  h_ht_l->Sumw2();
+  h_ht_bdt->Sumw2();
+  h_nhits_proton ->Sumw2();
+  h_nhits_pion ->Sumw2();
+  h_nhits_deuteron ->Sumw2();
+  h_eta->Sumw2();
+  h_rap->Sumw2();
+  h_cent->Sumw2();
+  h_lambda->Sumw2();
+  g_lambda->Sumw2();
+  h_p_mc->Sumw2();
+  h_pt_mc->Sumw2();
+  h_l_mc->Sumw2();
+  h_pl_mc->Sumw2();
+  g_p_mc->Sumw2();
+  g_pt_mc->Sumw2();
+  g_l_mc->Sumw2();
+  g_pl_mc->Sumw2();
+  g_pt_fine->Sumw2();
+  g_pt_fine_wgt->Sumw2();
+  g_pt_fine2->Sumw2();
+  g_pt_fine2_wgt->Sumw2();
+cout<<"Histograms booked"<<endl;
+}
+
+void write_histo()
+{
+    TFile *outhistfile = new TFile (ofile, "RECREATE");
+    outhistfile->cd();
+
+h_mass_qa->Write();
+h_mass_pt->Write();
+h_mass_pl->Write();
+h_chi2primary_proton->Write();
+h_chi2primary_deuteron->Write();
+h_chi2primary_pi->Write();
+
+        h_v_01_pvdca->Write();
+        h_v_02_pvdca->Write();
+        h_v_12_pvdca->Write();
+        h_ht_bdfvtx->Write();
+        h_ht_bdfvtx2->Write();
+
+h_v_01_chi2primary->Write();
+h_v_02_chi2primary->Write();
+h_v_12_chi2primary->Write();
+
+h_pt_proton     ->Write();
+h_pt_pion       ->Write();
+h_pt_deuteron   ->Write();
+
+h_v_01_dca->Write();
+h_v_02_dca->Write();
+h_v_12_dca->Write();
+
+h_mass_01->Write();
+h_mass_02->Write();
+h_mass_12->Write();
+
+h_ht_ldl->Write();
+h_ht_l->Write();
+h_ht_dl->Write();
+h_ht_chi2topo->Write();
+h_ht_chi2ndf->Write();
+h_ht_dca_proton->Write();
+h_ht_dca_pion->Write();
+h_ht_dca_deuteron->Write();
+h_nhits_proton->Write();
+h_nhits_pion ->Write();
+h_nhits_deuteron ->Write();
+h_eta->Write();
+h_rap->Write();
+h_dedx_p->Write();
+h_bnhits->Write();
+h_bdedx->Write();
+h_pt->Write();
+h_r_pt->Write();
+g_pt->Write();
+g_pl->Write();
+h_dca ->Write();
+g_eta->Write();
+h_ht_bdfvtx->Write();
+h_ht_bdfvtx2->Write();
+h_ht_lifetime->Write();
+h_cent->Write();
+g_pt_wgt->Write();
+g_pl_wgt->Write();
+h_mass_pt_wgt->Write();
+h_mass_pl_wgt->Write();
+h_ht_bdt->Write();
+g_pt_fine_wgt->Write();
+g_pt_fine->Write();
+g_pt_fine2_wgt->Write();
+g_pt_fine2->Write();
+h_lambda ->Write();
+g_lambda ->Write();
+if(_condor==0){
+h_p_mc -> Write();
+h_pt_mc -> Write();
+h_l_mc -> Write();
+h_pl_mc -> Write();
+g_p_mc -> Write();
+g_pt_mc -> Write();
+g_l_mc -> Write();
+g_pl_mc -> Write();
+h_lt_mc -> Write();
+g_lt_mc -> Write();
+}
+
+
+}
+int Centrality(int gRefMult )
+{
+    if      (gRefMult>=centFull[8]) centrality=8;
+    else if (gRefMult>=centFull[7]) centrality=7;
+    else if (gRefMult>=centFull[6]) centrality=6;
+    else if (gRefMult>=centFull[5]) centrality=5;
+    else if (gRefMult>=centFull[4]) centrality=4;
+    else if (gRefMult>=centFull[3]) centrality=3;
+    else if (gRefMult>=centFull[2]) centrality=2;
+    else if (gRefMult>=centFull[1]) centrality=1;
+    else if (gRefMult>=centFull[0]) centrality=0;
+    else centrality = 9;
+
+    return centrality;
+}
+

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE note [
+<!ENTITY listOfFiles "filelist_3p85gev_new.list">
+<!ENTITY dir "/star/u/yhleung2/pwg/33.standard_reco">
+]>
+
+<job fileListSyntax="xrootd" maxFilesPerProcess="15" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+starver SL19e
+source setDEV2.csh
+cons
+root4star -b -q -l analysispicodst_ht_tree_rotate_3.C\(\"$FILELIST\",\"null\",true\) &gt;&amp; ${JOBID}_1.log
+ls -lhrt
+mv ana_tree.root ${JOBID}_ana.root
+echo "ana_tree.root" > filelist.txt
+<!--root4star -b -q -l process_tree_tmva_he_kf_v5.C\(\1,0\) &gt;&amp; ${JOBID}_2.log-->
+<!--mv ana_tree_cut_mode_3.root ${JOBID}_ana.root-->
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="all"/>
+<output fromScratch="*_ana.root" toURL="&dir;/taxi_ht_pico_tree_newpid2_rotate_3/" />
+<output fromScratch="*.log" toURL="&dir;/log/" />
+<!--output fromScratch="*_ana.root" toURL="&dir;/taxi_ld_ana_flow_v2/" /-->
+
+<SandBox installer="ZIP">
+	<Package name="Package_htqa_newpid2_rotate_3">
+    <File>file:./StRoot/</File>
+    <File>file:./analysispicodst_ht_tree_rotate_3.C</File>
+    <File>file:./readPicoDst.C</File>
+    <File>file:./StRoot_v2/</File>
+    <File>file:./process_tree_tmva_he_kf_v5.C</File>
+    <File>file:./setDEV2.csh</File>
+    <File>file:./.sl73_gcc485</File>
+    <File>file:./lMuDst.C</File>
+    <File>file:./filelist_3p85gev_new.list</File>
+	</Package>
+</SandBox>
+
+</job>

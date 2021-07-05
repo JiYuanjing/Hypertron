@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE note [
+<!ENTITY listOfFiles "3b2_list_list.list">
+<!ENTITY dir "/star/u/yhleung2/pwg/33.standard_reco">
+]>
+
+<job fileListSyntax="xrootd" maxFilesPerProcess="5" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+starver SL19e
+source setDEV2.csh
+cp StRoot/KFParticlePerformance/KFTopoPerformance.cxx.3b2 StRoot/KFParticlePerformance/KFTopoPerformance.cxx
+cp StRoot/KFParticlePerformance/StKFParticleAnalysisMaker.cxx.3b2 StRoot/KFParticlePerformance/StKFParticleAnalysisMaker.cxx
+cons
+root4star -b -q -l analysismudst_3b.C\(\"$FILELIST\",\"null\",false\) &gt;&amp; ${JOBID}_1.log
+ls -lhrt
+mv ana_tree.root ${JOBID}_ana.root
+echo "ana_tree.root" > filelist.txt
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="all"/>
+<output fromScratch="*_ana.root" toURL="&dir;/taxi_h3l3b2_mu_tree_off/" />
+<output fromScratch="*.log" toURL="&dir;/log/" />
+<!--output fromScratch="*_ana.root" toURL="&dir;/taxi_ld_ana_flow_v2/" /-->
+
+<SandBox installer="ZIP">
+	<Package name="Package_mu_h3l3b2_off">
+    <File>file:./StRoot/</File>
+    <File>file:./readPicoDst.C</File>
+    <File>file:./StRoot_v2/</File>
+    <File>file:./analysismudst_3b.C</File>
+    <File>file:./setDEV2.csh</File>
+    <File>file:./.sl73_gcc485</File>
+    <File>file:./lMuDst.C</File>
+    <File>file:./filelist_3p85gev_new.list</File>
+	</Package>
+</SandBox>
+
+</job>

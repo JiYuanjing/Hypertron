@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE note [
+<!ENTITY listOfFiles "filelist_ht_emb4.list">
+<!ENTITY dir "/star/u/yhleung2/pwg/33.standard_reco">
+]>
+
+<job fileListSyntax="xrootd" maxFilesPerProcess="10" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+starver SL19e
+root4star -b -q process_tree_tmva_3b_kf_vmv12.C+\(\1,1,0,0\) &gt;&amp; ${JOBID}_1.log
+root4star -b -q process_tree_tmva_3b_kf_vmv12.C+\(\1,1,0,-1\) &gt;&amp; ${JOBID}_2.log
+root4star -b -q process_tree_tmva_3b_kf_vmv12.C+\(\0,1,4,0\) &gt;&amp; ${JOBID}_3.log
+ls -lhrt
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="1"/>
+<output fromScratch="*.root" toURL="&dir;/taxi/" />
+<output fromScratch="*.log" toURL="&dir;/logmu/" />
+<!--output fromScratch="*_ana.root" toURL="&dir;/taxi_ld_ana_flow_v2/" /-->
+
+<SandBox installer="ZIP">
+	<Package name="Package1_htqa_47a15_0">
+    <File>file:./StRoot/</File>
+    <File>file:./process_tree_tmva_3b_kf_vmv12.C</File>
+    <File>file:./readPicoDst.C</File>
+    <File>file:./3b_input_mc_fine.root</File>
+    <File>file:./hl_input_mc_fine.root</File>
+    <File>file:./setDEV2.csh</File>
+    <File>file:./.sl73_gcc485</File>
+    <File>file:./lMuDst.C</File>
+	</Package>
+</SandBox>
+
+</job>
