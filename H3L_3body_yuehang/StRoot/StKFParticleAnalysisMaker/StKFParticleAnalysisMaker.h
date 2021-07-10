@@ -13,6 +13,8 @@
 #endif
 #include "TMVA/Reader.h"
 #include "TH2F.h"
+#include "StCuts.h"
+#include <deque>
 
 class StKFParticleInterface;
 class StKFParticlePerformanceInterface;
@@ -265,6 +267,7 @@ float b2mcpz;
   int bprotonid;
   int ht_ndaughters;
   int bismc;       
+  int bisMix;
   int cent9;
   double refmultcor;
   double reweight;
@@ -337,12 +340,42 @@ float b2mcpz;
   int fFlowRunId;
   int fFlowEventId;
   int fCentrality;
+  int fMixEventBufferSize;
   std::vector<TString> fFlowFiles;
   std::map<long, int> fFlowMap;
   
   bool fRunCentralityAnalysis;
   StRefMultCorr *fRefmultCorrUtil;
   TString fCentralityFile;
+
+  bool fMixEvent;
+  struct StMixEvent{
+    std::vector <KFParticle> d_v;
+    std::vector <float> d_v_chi2prim;
+    std::vector <float> d_v_dca;
+    std::vector <float> d_v_m2;
+    std::vector <float> d_v_z;
+    std::vector <float> d_v_dEdx;
+    std::vector <int> d_v_nhits;
+
+    // std::vector <KFParticle> Lambda_v;
+    std::vector <KFParticle> pi_v;
+    std::vector <float> pi_v_chi2prim;
+    std::vector <float> pi_v_dca;
+    std::vector <float> pi_v_m2;
+    std::vector <float> pi_v_sigma;
+    std::vector <int> pi_v_nhits;
+
+    std::vector <KFParticle> p_v;
+    std::vector <float> p_v_chi2prim;
+    std::vector <float> p_v_dca;
+    std::vector <float> p_v_m2;
+    std::vector <float> p_v_sigma;
+    std::vector <int> p_v_nhits;
+   
+  };
+  // std::vector <StMixEvent> bMixEventBuffer[nCentralityBins][nEPbins];
+  std::deque <StMixEvent> bMixEventBuffer[nCentralityBins][nEPbins];
   
   bool fAnalyseDsPhiPi;
 
@@ -355,7 +388,28 @@ float b2mcpz;
   void SetTMVACentralityBins(int iReader, TString bins);
   void SetTMVAPtBins(int iReader, TString bins);
   void SetTMVABins(int iReader, TString centralityBins="-1:1000", TString ptBins="-1.:1000.");
-  
+ 
+  int getEventPlaneBin(double ep)
+  {
+    //split ep in nEPbins for mix
+    double p=3.14159265;
+    double edge[nEPbins+1];
+    edge[nEPbins]=p;
+   
+    for (int i=0;i<nEPbins;i++) {edge[i]=i*p*2.0/nEPbins-p; }
+    int idx=-999;
+    for (int i=0;i<nEPbins;i++)
+    {
+      if (ep>=edge[i] && ep<edge[i+1]) {idx=i;break;}
+    }
+    if (idx>=0 && idx<nEPbins) return idx;
+    else { cout <<"event plane angle out of range! ep=" <<ep << endl; return -999;} 
+  } 
+
+void FillDaughterInfo(KFParticle& daughter, int trackId, int PDG, float &chi2primary, int &nhits, float &dca,float& sigma, float& bm2);
+bool FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deuteron);
+
+
  public: 
   StKFParticleAnalysisMaker(const char *name="KFParticleAnalysis");
   virtual       ~StKFParticleAnalysisMaker();
@@ -399,6 +453,15 @@ float b2mcpz;
   
   void RunFlowAnalysis()         { fFlowAnalysis = true; }
   void AddFlowFile(TString file) { fFlowFiles.push_back(file); }
+  ///mix event 
+  void RunMixEvent(int buffersize)       
+  { 
+      fMixEvent= true; 
+      fFlowAnalysis = true;
+      fRunCentralityAnalysis = true;
+      fMixEventBufferSize = buffersize;
+  }
+
   
   void RunCentralityAnalysis() { fRunCentralityAnalysis = true; }
   void SetCentralityFile(TString file) { fCentralityFile = file; }

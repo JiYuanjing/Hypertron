@@ -1,0 +1,7 @@
+{
+    "C_Cpp.dimInactiveRegions": false,
+    "files.associations": {
+        "analysispicodst_h3l3b_tree.C": "cpp",
+        "lMuDstMZ.C": "cpp"
+    }
+}

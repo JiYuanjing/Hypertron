@@ -162,7 +162,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     htriton3_tree.SetBranchAddress("v_01_chi2primary", &v_01_chi2primary); //
     htriton3_tree.SetBranchAddress("v_01_chi2ndf", &v_01_chi2ndf); //
     htriton3_tree.SetBranchAddress("mass_01", &mass_01); // same as below
-    /* htriton3_tree.SetBranchAddress("v_lambda_mass_0", &v_lambda_mass_0); */
+    htriton3_tree.SetBranchAddress("v_lambda_mass_0", &v_lambda_mass_0);
     htriton3_tree.SetBranchAddress("v_lambda_ldl_0", &v_lambda_ldl_0);  // will add later
     htriton3_tree.SetBranchAddress("v_lambda_l_0", &v_lambda_l_0);  // will add later
 
@@ -292,7 +292,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       hptppil->Fill( ppi_pt, v_lambda_l_0, weight);
       hptppildl->Fill( ppi_pt, v_lambda_ldl_0, weight);
     }
-
+     cout << mass_01<<" "<< v_lambda_mass_0<< endl;
     //compare H3L and Lambda+d
     if (mode==0 && bismc==mcH3L ) {
       double H3LpT = sqrt(bpx*bpx+bpy*bpy);

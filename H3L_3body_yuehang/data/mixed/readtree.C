@@ -1,7 +1,7 @@
 #include "tree.h"
 #include "Hists.h"
 // void readtree(TString mInputlist="H3L3b_tree_mc.root", int mode = 0, TString outfile="fout_H3L.root")
-void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1)
+void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1, int const isMix=0)
 {
   double snn = 3;
   double ycm;
@@ -79,6 +79,9 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   if (mode==0) treename = "htriton3_tree";
   TChain htriton3_tree(treename.Data()); 
 
+  TH1F* hrefmult  = new TH1F("hrefmult", "refmult; hrefmult; N_{evt}", 600,0,600);
+  hrefmult->SetDirectory(0);
+
   if (mInputlist.Contains(".root"))
   {
     htriton3_tree.Add(mInputlist.Data());
@@ -98,6 +101,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       else {
         if(nfile%50==0) cout<<"read in "<<nfile<<"th file: "<< tmp <<endl;
         htriton3_tree.Add(tmp);
+        TH1F* tmp = (TH1F*)ftmp->Get("hrefmult");
+        hrefmult->Add(tmp);
         nfile++;
       }
     }
@@ -159,7 +164,6 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     htriton3_tree.SetBranchAddress("v_lambda_ldl_0", &v_lambda_ldl_0);  // will add later
     htriton3_tree.SetBranchAddress("v_lambda_l_0", &v_lambda_l_0);  // will add later
 
-
     /* htriton3_tree.SetBranchAddress("bdpx", &bdpx); */
     /* htriton3_tree.SetBranchAddress("bdpy", &bdpy); */
     /* htriton3_tree.SetBranchAddress("bdpz", &bdpz); */
@@ -175,6 +179,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     htriton3_tree.SetBranchAddress("b1mcpx",&b1mcpx);
     htriton3_tree.SetBranchAddress("b1mcpy",&b1mcpy);
     htriton3_tree.SetBranchAddress("b1mcpz",&b1mcpz);
+    htriton3_tree.SetBranchAddress("bisMix",&bisMix);
   }
   htriton3_tree.SetBranchAddress("bmcpx",&bmcpx);
   htriton3_tree.SetBranchAddress("bmcpy",&bmcpy);                                               
@@ -232,6 +237,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     htriton3_tree.GetEntry(i); 
     if (i%100000==0) cout <<"read "<<i<<" events!" << endl;
     if ( !(bismc == mcState)  ) continue;
+    if (bisMix!=isMix) continue;
 
     double ptweight = 1; //reserved
     double rapweight = 1;
@@ -352,6 +358,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     hptH3L_pchi2prim->Write();
     hptH3L_dchi2prim->Write();
   }
+
+  hrefmult->Write();
 
   fout->Close();
   // htriton3_tree->Close();

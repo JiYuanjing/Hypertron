@@ -1,9 +1,10 @@
 #! /bin/bash
 #for data
 # root -b -q readtree.C\(\"data_rotate.root\",0,\"fout_H3L_rotate.root\"\,0\)
-for i in `ls list/*.list_*`; do 
-  root -b -q readtree.C\(\"${i}\",0,\"${i}_data.root\"\,0\)
-done
+root -b -q readtree.C\(\"data_test.root\",0,\"fout_H3L_data.root\"\,0\)
+# for i in `ls list/*.list_*`; do 
+#   root -b -q readtree.C\(\"${i}\",0,\"${i}_data.root\"\,0\)
+# done
 # root -b -q readtree.C\(\"$1\",0,\"$2\"\,0\)
 #for mc
 # root -b -q readtree.C\(\"Lambda_tree_mc_v2.root\",1,\"fout_Lambda.root\"\)
