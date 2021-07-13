@@ -2,7 +2,7 @@
    root.exe -q -b -x 'muMc.C(1e6,"../*MuDst.root")'
    */
 bool _isPico;
-void analysispicodst_h3l3b_tree(TString picolist="test_mc.list",  TString outFileName="test27gev1.root", bool _isPico=false)
+void analysispicodst_h3l3b_tree_ME(TString picolist="onetest.list",  TString outFileName="test.root", bool _isPico=false)
 {
 
   TStopwatch timer;
@@ -122,10 +122,10 @@ void analysispicodst_h3l3b_tree(TString picolist="test_mc.list",  TString outFil
   //this cut seems necessary for 3BODY decay
   StKFParticleInterface::instance()->SetChiPrimaryCut2D(3);
 
-
-  // StKFParticleInterface::instance()->SetLdLCutCharmManybodyDecays(3);
-  // StKFParticleInterface::instance()->SetChi2TopoCutCharmManybodyDecays(10);
-  // StKFParticleInterface::instance()->SetChi2CutCharmManybodyDecays(10);
+  //these cuts are not only for charm ...
+  StKFParticleInterface::instance()->SetLdLCutCharmManybodyDecays(3);
+  StKFParticleInterface::instance()->SetChi2TopoCutCharmManybodyDecays(10);
+  StKFParticleInterface::instance()->SetChi2CutCharmManybodyDecays(10);
 
   /*
      StKFParticleInterface::instance()->SetChi2Cut2D(20);
@@ -153,7 +153,8 @@ void analysispicodst_h3l3b_tree(TString picolist="test_mc.list",  TString outFil
 
   //StKFParticleInterface::instance()->AddDecayToReconstructionList(3003);
 
-  StKFParticleInterface::instance()->AddDecayToReconstructionList( 3122);//lambda0  
+  // StKFParticleInterface::instance()->AddDecayToReconstructionList( 3122);//lambda0  
+  StKFParticleInterface::instance()->AddDecayToReconstructionList( 3012);//lambda0  
   StKFParticleInterface::instance()->AddDecayToReconstructionList( 103004);
 
 
@@ -198,7 +199,7 @@ void analysispicodst_h3l3b_tree(TString picolist="test_mc.list",  TString outFil
 
   // chain->EventLoop(nevent);
   for (int iEvent = 0; iEvent < nevent; ++iEvent)
-  // for (int iEvent = 0; iEvent < 2000; ++iEvent)
+  // for (int iEvent = 0; iEvent < 20000; ++iEvent)
   {
     chain->Clear();
     if(iEvent && iEvent%100 == 0) cout<<"... finished processing "<<iEvent<<" events."<<endl;

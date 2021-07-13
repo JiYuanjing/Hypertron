@@ -101,8 +101,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       else {
         if(nfile%50==0) cout<<"read in "<<nfile<<"th file: "<< tmp <<endl;
         htriton3_tree.Add(tmp);
-        TH1F* tmp = (TH1F*)ftmp->Get("hrefmult");
-        hrefmult->Add(tmp);
+        TH1F* htmp = (TH1F*)ftmp->Get("hrefmult");
+        hrefmult->Add(htmp);
         nfile++;
       }
     }
@@ -110,6 +110,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
 
   htriton3_tree.SetBranchAddress("bismc", &bismc);
   htriton3_tree.SetBranchAddress("bparticlemass",&bparticlemass);
+  htriton3_tree.SetBranchAddress("bparticleid",&bparticleid);
   htriton3_tree.SetBranchAddress("bpx",&bpx);
   htriton3_tree.SetBranchAddress("bpy",&bpy);
   htriton3_tree.SetBranchAddress("bpz",&bpz);
@@ -128,6 +129,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
 
     htriton3_tree.SetBranchAddress("ht_chi2topo", &ht_chi2topo);
     htriton3_tree.SetBranchAddress("ht_chi2ndf", &ht_chi2ndf);
+    htriton3_tree.SetBranchAddress("ht_NDF", &ht_NDF);
     htriton3_tree.SetBranchAddress("ht_ldl", &ht_ldl);
     htriton3_tree.SetBranchAddress("ht_l", &ht_l);
     htriton3_tree.SetBranchAddress("ht_dl", &ht_dl);
@@ -226,8 +228,12 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_chi2topo->Sumw2();
   TH2F* hptH3L_chi2ndf= new TH2F("hptH3L_chi2ndf","hptH3L_chi2topo;p_{T};chi2ndf",100,0,5,100,0,20);
   hptH3L_chi2ndf->Sumw2();
-  TH2F* hptH3L_dDca= new TH2F("hptH3L_dDca","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,20);
+  TH2F* hptH3L_dDca= new TH2F("hptH3L_dDca","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,10);
   hptH3L_dDca->Sumw2();
+  TH2F* hptH3L_piDca= new TH2F("hptH3L_piDca","hptH3L_piDca;p_{T};piDca",100,0,5,100,0,20);
+  hptH3L_piDca->Sumw2();
+  TH2F* hptH3L_pDca= new TH2F("hptH3L_pDca","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,20);
+  hptH3L_pDca->Sumw2();
   TH2F* hptH3L_dpDca= new TH2F("hptH3L_dpDca","hptH3L_dpDca;p_{T};dpDca",100,0,5,100,0,20);
   hptH3L_dpDca->Sumw2();
 
@@ -285,6 +291,9 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     if (mcState==0) weight = reweight; 
     double ppi_pt = sqrt(bpx*bpx+bpy*bpy); // lambda case 
     if (mode==0) ppi_pt= sqrt(bpionpx*bpionpx+bpionpy*bpionpy+bprotonpy*bprotonpy+bprotonpx*bprotonpx);
+    if (chi2primary_d<2) continue;
+    if (mass_01>1.15 || mass_01< 1.) continue;
+    if (bparticleid<0) continue;
 
     //compare H3L->ppi and Lambda->ppi
     if ((mode==0 && bismc==mcState) || (mode==1 && bismc==mcState) ){ 
@@ -320,13 +329,15 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       hptH3L_pichi2prim->Fill( H3LpT, chi2primary_pi, weight);
       hptH3L_dchi2prim->Fill( H3LpT, chi2primary_d, weight);
       hptH3L_dDca->Fill( H3LpT, dca_deuteron, weight);
+      hptH3L_pDca->Fill( H3LpT, dca_proton, weight);
+      hptH3L_piDca->Fill( H3LpT, dca_pion, weight);
       hptH3L_dpDca->Fill( H3LpT, v_12_dca, weight);
       /* weight=1; */
       /* bool passTopoCuts=1; */
-      bool passTopoCuts =  ht_l >8 && ht_ldl>10 && dca_pion>1.5 && dca_proton>0.5 && dca_proton<5 && dca_deuteron<2 && ht_chi2topo<10 && 
-                           ht_chi2ndf<4.0 && mass_01 <1.15;
-      /* bool passTopoCuts =  ht_l >10 && ht_ldl>8 && chi2primary_d > 3 && ht_chi2topo<5 && ht_chi2ndf<2.5; */
-      /* bool passTopoCuts =  ht_l >10 && ht_ldl>4 && chi2primary_d > 3 && ht_chi2topo<5 && ht_chi2ndf<2.5; */
+      // bool passTopoCuts =  ht_l >8 && ht_ldl>10 && dca_pion>1.5 && dca_proton>0.5 && dca_proton<5 && dca_deuteron<2 && ht_chi2topo<10 && 
+                           // ht_chi2ndf<4.0 && mass_01 <1.15;
+      bool passTopoCuts =  ht_l >10 && ht_ldl>8 && chi2primary_d > 3 && ht_chi2topo<10 && ht_chi2ndf<10 && mass_01<1.15 && mass_01>1;
+      // bool passTopoCuts =  ht_l >10 && ht_ldl>8 &&chi2primary_d>3 && ht_chi2topo<10 && ht_chi2ndf<10;
       if ( passTopoCuts) hptH3Lmass->Fill(H3LpT, bparticlemass, weight); 
     }
   }
@@ -349,6 +360,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   {
     hptH3Lmass->Write();
     hptH3L_dDca->Write();
+    hptH3L_piDca->Write();
+    hptH3L_pDca->Write();
     hptH3L_dpDca->Write();
     hptH3L_chi2ndf->Write();
     hptH3L_chi2topo->Write();

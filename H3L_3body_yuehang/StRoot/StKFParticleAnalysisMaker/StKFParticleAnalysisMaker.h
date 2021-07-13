@@ -15,6 +15,7 @@
 #include "TH2F.h"
 #include "StCuts.h"
 #include <deque>
+// #include "StPileupUtil/StPileupUtil.h"
 
 class StKFParticleInterface;
 class StKFParticlePerformanceInterface;
@@ -25,7 +26,7 @@ class TNtuple;
 class TFile;
 class TChain;
 class StRefMultCorr;
-class CentralityMaker;
+// class CentralityMaker;
 
 class StKFParticleAnalysisMaker : public StMaker {
  private:
@@ -85,6 +86,8 @@ class StKFParticleAnalysisMaker : public StMaker {
   TH1F *hvtxgood;
   TH2F *hvtx_xy;
   TH1F *hrefmult;
+  TH1F *hCent;
+  TH1F *hCentWt;
   TH1F *wrefmult;
 
   int notbadrun;
@@ -346,6 +349,8 @@ float b2mcpz;
   
   bool fRunCentralityAnalysis;
   StRefMultCorr *fRefmultCorrUtil;
+  // StPileupUtil* mPileupTool;
+  
   TString fCentralityFile;
 
   bool fMixEvent;
@@ -373,10 +378,19 @@ float b2mcpz;
     std::vector <float> p_v_sigma;
     std::vector <int> p_v_nhits;
    
+    std::vector <KFParticle> ppi_v;
+
+    float Vx;
+    float Vy;
+    float Vz;
   };
   // std::vector <StMixEvent> bMixEventBuffer[nCentralityBins][nEPbins];
-  std::deque <StMixEvent> bMixEventBuffer[nCentralityBins][nEPbins];
-  
+  std::deque <StMixEvent> bMixEventBuffer[nCentralityBins][nEPbins][nVtxbins];
+  int EPbin, Vtxbin;
+ 
+ //functions 
+  int CheckIfBadRun(int fsnn, int brunid);
+  int PassTrigger(StPicoDst* fPicoDst, int fsnn);
   bool fAnalyseDsPhiPi;
 
   void GetDaughterParameters(const int iReader, int& iDaughterTrack, int& iDaughterParticle, KFParticle& particle);
@@ -405,9 +419,10 @@ float b2mcpz;
     if (idx>=0 && idx<nEPbins) return idx;
     else { cout <<"event plane angle out of range! ep=" <<ep << endl; return -999;} 
   } 
+  int getVtxBin(float vx, float vy, float vz);
 
 void FillDaughterInfo(KFParticle& daughter, int trackId, int PDG, float &chi2primary, int &nhits, float &dca,float& sigma, float& bm2);
-bool FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deuteron);
+bool FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deuteron, KFParticle& PPi, double dVx, double dVy, double dVz, int mode);
 
 
  public: 

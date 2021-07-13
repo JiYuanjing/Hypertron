@@ -305,6 +305,7 @@ class KFParticleFinder
   std::vector<KFParticle> fLLn;
   std::vector<KFParticle> fH5LL;
   std::vector<KFParticle> fPPi;//proton pion combination //b
+  std::vector<KFParticle> fPPibar;//proton pion combination //b
 
   //vectors of candidates with the mass constraint
   static const int fNSecCandidatesSets = 5;

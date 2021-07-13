@@ -1,8 +1,10 @@
 #! /bin/bash
 #for data
 # root -b -q readtree.C\(\"data_rotate.root\",0,\"fout_H3L_rotate.root\"\,0\)
-root -b -q readtree.C\(\"ana_tree.root\",0,\"fout_H3L_data.root\",0,1\)
-root -b -q readtree.C\(\"ana_tree.root\",0,\"fout_H3L_data_ME.root\",0,0\)
+# input="ana_tree.root"
+input="dataME_test2.root"
+root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data.root\",0,1\)
+root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME.root\",0,0\)
 # for i in `ls list/*.list_*`; do 
 #   root -b -q readtree.C\(\"${i}\",0,\"${i}_data.root\"\,0\)
 # done

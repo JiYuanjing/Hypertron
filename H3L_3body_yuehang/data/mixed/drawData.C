@@ -371,30 +371,67 @@ void drawCompLaDeu()
   pdf->Close();
 }
 
-void drawRotateQuasi()
+void drawMixData()
 {
   SetsPhenixStyle();
+  TCanvas* c = new TCanvas("c","c");
+  TPDF* pdf = new TPDF("LambdaDeu_rotate.pdf");
+  pdf->Off();
+
   TFile *f1 = TFile::Open("fout_H3L_data.root"); 
-  TH2F* h2sig = (TH2F*)f1->Get("hptH3Lmass");
+  TH2F* h2sig = (TH2F*)f1->Get("hptH3Lmass")->Clone("hptH3Lmass_sig");
   TH1F* hsig = (TH1F*)h2sig->ProjectionY("hsig");
   
   TFile *f2 = TFile::Open("fout_H3L_data_ME.root"); 
-  TH2F* h2bk = (TH2F*)f2->Get("hptH3Lmass");
+  TH2F* h2bk = (TH2F*)f2->Get("hptH3Lmass")->Clone("hptH3Lmass_ME");
   TH1F* hbk = (TH1F*)h2bk->ProjectionY("hbk");
   
-  double sig_sb = hsig->Integral(hsig->GetXaxis()->FindBin(2.96), hsig->GetXaxis()->FindBin(2.98)) + hsig->Integral(hsig->GetXaxis()->FindBin(2.98),  hsig->GetXaxis()->FindBin(3.15));
-  double bk_sb =  hbk->Integral(hbk->GetXaxis()->FindBin(2.96), hbk->GetXaxis()->FindBin(2.98)) + hbk->Integral(hbk->GetXaxis()->FindBin(2.98),  hbk->GetXaxis()->FindBin(3.15));
+  double sig_sb = hsig->Integral(hsig->GetXaxis()->FindBin(2.95), hsig->GetXaxis()->FindBin(2.98)) + hsig->Integral(hsig->GetXaxis()->FindBin(3.0),  hsig->GetXaxis()->FindBin(3.04));
+  // double sig_sb = hsig->Integral(hsig->GetXaxis()->FindBin(2.95), hsig->GetXaxis()->FindBin(2.98)) ;
+  double bk_sb =  hbk->Integral(hbk->GetXaxis()->FindBin(2.95), hbk->GetXaxis()->FindBin(2.98)) + hbk->Integral(hbk->GetXaxis()->FindBin(3.0),  hbk->GetXaxis()->FindBin(3.04));
+  // double bk_sb =  hbk->Integral(hbk->GetXaxis()->FindBin(2.95), hbk->GetXaxis()->FindBin(2.98)) ;
   double scale = sig_sb/bk_sb;
+  cout <<scale << endl;
+  hbk->Scale(scale);
 
   hsig->Draw();
+  hsig->GetXaxis()->SetTitle("Mass(p#pid) (GeV/c^{2})");
+  hsig->GetYaxis()->SetTitle("Counts");
   hbk->SetMarkerStyle(kOpenCircle);
   hbk->SetMarkerColor(kRed);
   hbk->Draw("same");
+ 
+  addpdf(pdf);
   
+  projAndComp("hptH3L_l", f1, f2, c,pdf,"l", "p",4,"Sig","BK", "dp#pi");
+  projAndComp("hptH3L_ldl", f1, f2, c,pdf,"l/dl", "p",4,"Sig","BK", "dp#pi");
+  projAndComp("hptH3L_chi2ndf", f1, f2, c,pdf,"chi2NDF", "p",4,"Sig","BK", "dp#pi");
+  projAndComp("hptH3L_dchi2prim", f1, f2, c,pdf,"d chi2primary", "p",4,"Sig","BK", "dp#pi");
+  projAndComp("hptH3L_pchi2prim", f1, f2, c,pdf,"p chi2primary", "p",4,"Sig","BK", "dp#pi");
+  projAndComp("hptH3L_pichi2prim", f1, f2, c,pdf,"#pi chi2primary", "p",4,"Sig","BK", "dp#pi");
+  projAndComp("hptH3L_dDca", f1, f2, c,pdf,"d DCA", "p",1,"Sig","BK","dp#pi"  );
+  projAndComp("hptH3L_piDca", f1, f2, c,pdf,"#pi DCA", "p",4,"Sig","BK", "dp#pi" );
+  projAndComp("hptH3L_pDca", f1, f2, c,pdf,"#p DCA", "p",4,"Sig","BK", "dp#pi" );
+  projAndComp("hptH3L_dpDca", f1, f2, c,pdf,"dp pair DCA", "p",4,"Sig","BK", "dp#pi" );
+  projAndComp("hptH3L_chi2topo", f1, f2, c,pdf,"chi2topo", "p",4,"Sig","BK", "dp#pi" );
+
+  projAndComp("hptppimass", f1, f2, c,pdf,"p#pi Mass (GeV/c^{2})", "plhist",1 ,"Sig" ,"BK","p#pi");
+  projAndComp("hptppichi2ndf", f1, f2, c,pdf,"p#pi #chi^{2}_{NDF}","" ,1 , "Sig" ,"BK","p#pi");
+  projAndComp("hptppichi2prim", f1, f2, c,pdf,"(p#pi) #chi^{2}_{prim}" ,"",1 , "Sig" ,"BK","p#pi");
+  projAndComp("hptppil", f1, f2, c,pdf,"(p#pi) l" ,"",1 , "Sig" ,"BK","p#pi");
+  projAndComp("hptppildl", f1, f2, c,pdf,"(p#pi) l/#deltal" ,"",1 , "Sig" ,"BK","p#pi");
+  projAndComp("hptpichi2prim", f1, f2, c,pdf,"#pi #chi^{2}_{prim}" ,"",1 , "Sig" ,"BK","p#pi");
+  projAndComp("hptpchi2prim", f1, f2, c,pdf,"p #chi^{2}_{prim}" ,"",1 , "Sig" ,"BK","p#pi");
+  projAndComp("hptpidca", f1, f2, c,pdf,"#pi DCA","" ,2, "Sig" ,"BK","p#pi");
+  projAndComp("hptpdca", f1, f2, c,pdf , "p DCA","" ,2, "Sig" ,"BK", "p#pi");
+  projAndComp("hptsumdca", f1, f2, c,pdf , "p+pi DCA","" ,2, "Sig" ,"BK", "p#pi");
+
+  pdf->On();
+  pdf->Close();
 
 }
 
 void drawData()
 {
-  drawRotateQuasi();
+  drawMixData();
 }

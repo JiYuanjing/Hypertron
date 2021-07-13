@@ -912,7 +912,7 @@ void KFParticleTopoReconstructor::SelectParticleCandidates()
   }
 #endif
   for(unsigned int iParticle=0; iParticle<fParticles.size(); iParticle++)
-    if(deleteCandidate[iParticle] && abs(fParticles[iParticle].GetPDG())!=3012 && abs(fParticles[iParticle].GetPDG())!=1000010020)
+    if(deleteCandidate[iParticle] && abs(fParticles[iParticle].GetPDG())!=3012)
       fParticles[iParticle].SetPDG(-1);
 }
 
