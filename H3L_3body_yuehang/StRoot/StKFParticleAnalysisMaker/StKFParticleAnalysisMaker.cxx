@@ -36,6 +36,7 @@
 // #include "StPileupUtil/StPileupUtil.h"
 //-----analysis cuts--
 #include "StCuts.h"
+
 ClassImp(StKFParticleAnalysisMaker);
 
 //________________________________________________________________________________
@@ -1426,18 +1427,18 @@ Int_t StKFParticleAnalysisMaker::Make()
           // cout << rTracks[0].Id()[iTrack]<<endl;
           KFParticle particle; 
           fStKFParticlePerformanceInterface->GetParticle(particle, rTracks[0].Id()[iTrack]);
-          // cout <<particle.GetPDG() << endl;
-          newEvent.d_v.push_back(particle);   
+          // cout <<particle.DaughterIds()[0] << endl;
           float zdeuteron, chi2prim, dca,m2;
           int nhits;
           FillDaughterInfo(particle, particle.DaughterIds()[0], 1000010020, chi2prim, nhits, dca, zdeuteron, m2 );
+          if (nhits<15) continue; 
           newEvent.d_v_chi2prim.push_back(chi2prim);
           newEvent.d_v_dca.push_back(dca);
           newEvent.d_v_nhits.push_back(nhits);
           newEvent.d_v_m2.push_back(m2);
           newEvent.d_v_z.push_back(zdeuteron);
-          newEvent.d_v.push_back(particle);
           newEvent.d_v_dEdx.push_back(fStKFParticleInterface->GetdEdX(particle.DaughterIds()[0]));           
+          newEvent.d_v.push_back(particle);   
         }
         for (int iParticle=0; iParticle<fStKFParticlePerformanceInterface->GetNReconstructedParticles(); iParticle++)
         { 
@@ -1471,7 +1472,7 @@ Int_t StKFParticleAnalysisMaker::Make()
             KFParticle proton = fStKFParticleInterface->GetParticles()[particle.DaughterIds()[1]];
             float sigma, chi2prim, dca, m2;
             int nhits;
-            FillDaughterInfo(pion, particle.DaughterIds()[0], 211, chi2prim, nhits, dca, sigma, m2 );
+            FillDaughterInfo(pion, pion.DaughterIds()[0], 211, chi2prim, nhits, dca, sigma, m2 );
             newEvent.pi_v_chi2prim.push_back(chi2prim);
             newEvent.pi_v_dca.push_back(dca);
             newEvent.pi_v_nhits.push_back(nhits);
@@ -1479,7 +1480,7 @@ Int_t StKFParticleAnalysisMaker::Make()
             newEvent.pi_v_sigma.push_back(sigma);
             newEvent.pi_v.push_back(pion);
 
-            FillDaughterInfo(proton, particle.DaughterIds()[1], 2212, chi2prim, nhits, dca, sigma, m2 );
+            FillDaughterInfo(proton, proton.DaughterIds()[0], 2212, chi2prim, nhits, dca, sigma, m2 );
             newEvent.p_v_chi2prim.push_back(chi2prim);
             newEvent.p_v_dca.push_back(dca);
             newEvent.p_v_nhits.push_back(nhits);
@@ -1495,6 +1496,43 @@ Int_t StKFParticleAnalysisMaker::Make()
         newEvent.Vz = bVz;
 
         bool fillBuffer = newEvent.p_v.size()>0 && newEvent.d_v.size()>0;
+        if (fillBuffer) {
+          // cout << "push current event into buffer"<<endl;
+          //fot test
+          bisMix=2;
+          cout <<newEvent.p_v.size()<<" "<<newEvent.p_v_dca.size() << endl;
+            for (int id = 0;id<newEvent.d_v.size();id++){
+              for (int iL = 0;iL<newEvent.p_v.size();iL++){
+                // cout << " start fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
+                bool filltree = FillThreeDaughtersMix(newEvent.pi_v[iL],newEvent.p_v[iL],newEvent.d_v[id], newEvent.ppi_v[iL], 0,0,0,0);
+                //add daughter further info
+                chi2primary_d = newEvent.d_v_chi2prim[id];
+                nhits_deuteron = newEvent.d_v_nhits[id];
+                dca_deuteron = newEvent.d_v_dca[id];
+                bdm2 = newEvent.d_v_m2[id];
+                dca_deuteron = newEvent.d_v_dca[id];
+                bdedx = newEvent.d_v_dEdx[id];
+                bzdeuteron =  newEvent.d_v_z[id];
+                 
+                chi2primary_pi = newEvent.pi_v_chi2prim[iL];
+                bpionnsigma = newEvent.pi_v_sigma[iL];
+                nhits_pion = newEvent.pi_v_nhits[iL];
+                dca_pion = newEvent.pi_v_dca[iL];
+                bpionm2 = newEvent.pi_v_m2[iL];
+
+                chi2primary_proton = newEvent.p_v_chi2prim[iL];
+                bprotonsigma = newEvent.p_v_sigma[iL];
+                nhits_proton = newEvent.p_v_nhits[iL];
+                dca_proton = newEvent.p_v_dca[iL];
+                bprotonm2 = newEvent.p_v_m2[iL];    
+                if (filltree) 
+                {
+                  htriton3_tree->Fill();
+                } 
+              }                
+            }
+        }
+        
         if ( bMixEventBuffer[centralityBin][EPbin][Vtxbin].size()==fMixEventBufferSize && fillBuffer){
           // cout <<"buffer is full, start mix, EPbin: " << EPbin<<" EP angle: "<<psi_1_EPD_4<<" cent: " <<centralityBin<< endl;
           // cout <<"current event d size: " <<  newEvent.d_v.size() << " (ppi): "<< newEvent.p_v.size()<< endl;
@@ -1506,67 +1544,66 @@ Int_t StKFParticleAnalysisMaker::Make()
             float dVx = newEvent.Vx - bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].Vx;
             float dVy = newEvent.Vy - bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].Vy;
             float dVz = newEvent.Vz - bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].Vz;
+            // cout <<dVx<<" "<<dVy<<" "<<dVz << endl;
 
             for (int id = 0;id<bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v.size();id++){
               for (int iL = 0;iL<newEvent.p_v.size();iL++){
                 //will update here!
                 bool filltree = FillThreeDaughtersMix(newEvent.pi_v[iL],newEvent.p_v[iL],bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v[id], newEvent.ppi_v[iL], dVx, dVy, dVz, 1);
-                //add daughter further info
-                chi2primary_d = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_chi2prim[id];
-                nhits_deuteron = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_nhits[id];
-                dca_deuteron = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_dca[id];
-                bdm2 = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_m2[id];
-
-                bdedx = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_dEdx[id];
-                bzdeuteron =  bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_z[id];
-                //     
-                chi2primary_pi = newEvent.pi_v_chi2prim[iL];
-                // cout <<"pion " <<pion.DaughterIds()[0]<< endl;
-                bpionnsigma = newEvent.pi_v_sigma[iL];
-                nhits_pion = newEvent.pi_v_nhits[iL];
-                dca_pion = newEvent.pi_v_dca[iL];
-                bpionm2 = newEvent.pi_v_m2[iL];
-
-                chi2primary_proton = newEvent.p_v_chi2prim[iL];
-                bprotonsigma = newEvent.p_v_sigma[iL];
-                nhits_proton = newEvent.p_v_nhits[iL];
-                dca_proton = newEvent.p_v_dca[iL];
-                bprotonm2 = newEvent.p_v_m2[iL];
-
                 if (filltree) 
-                {   htriton3_tree->Fill(); }
+                {
+                  //add daughter further info
+                  nhits_deuteron = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_nhits[id];
+                  dca_deuteron = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_dca[id];
+                  bdm2 = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_m2[id];
+                  chi2primary_d = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_chi2prim[id];
+                  bdedx = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_dEdx[id];
+                  bzdeuteron =  bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].d_v_z[id];
+                  //     
+                  chi2primary_pi = newEvent.pi_v_chi2prim[iL];
+                  bpionnsigma = newEvent.pi_v_sigma[iL];
+                  nhits_pion = newEvent.pi_v_nhits[iL];
+                  dca_pion = newEvent.pi_v_dca[iL];
+                  bpionm2 = newEvent.pi_v_m2[iL];
+
+                  chi2primary_proton = newEvent.p_v_chi2prim[iL];
+                  bprotonsigma = newEvent.p_v_sigma[iL];
+                  nhits_proton = newEvent.p_v_nhits[iL];
+                  dca_proton = newEvent.p_v_dca[iL];
+                  bprotonm2 = newEvent.p_v_m2[iL];
+
+                  htriton3_tree->Fill(); 
+                }
               }                
             }
             for (int id = 0;id<newEvent.d_v.size();id++){
               for (int iL = 0;iL<bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v.size();iL++){
-                // cout << " start fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
                 bool filltree = FillThreeDaughtersMix(bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v[iL],bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v[iL],newEvent.d_v[id], bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].ppi_v[iL], dVx, dVy, dVz, 2);
+                  //add daughter further info
+                  chi2primary_d = newEvent.d_v_chi2prim[id];
+                  nhits_deuteron = newEvent.d_v_nhits[id];
+                  dca_deuteron = newEvent.d_v_dca[id];
+                  bdm2 = newEvent.d_v_m2[id];
+                  dca_deuteron = newEvent.d_v_dca[id];
+                  bdedx = newEvent.d_v_dEdx[id];
+                  bzdeuteron =  newEvent.d_v_z[id];
+                  //     
+                  chi2primary_pi = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_chi2prim[iL];
+                  bpionnsigma = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_sigma[iL];
+                  nhits_pion = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_nhits[iL];
+                  dca_pion = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_dca[iL];
+                  bpionm2 = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_m2[iL];
 
-                //add daughter further info
-                chi2primary_d = newEvent.d_v_chi2prim[id];
-                nhits_deuteron = newEvent.d_v_nhits[id];
-                dca_deuteron = newEvent.d_v_dca[id];
-                bdm2 = newEvent.d_v_m2[id];
-
-                bdedx = newEvent.d_v_dEdx[id];
-                bzdeuteron =  newEvent.d_v_z[id];
-                //     
-                chi2primary_pi = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_chi2prim[iL];
-                // cout <<"pion " <<pion.DaughterIds()[0]<< endl;
-                bpionnsigma = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_sigma[iL];
-                nhits_pion = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_nhits[iL];
-                dca_pion = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_dca[iL];
-                bpionm2 = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_m2[iL];
-
-                chi2primary_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_chi2prim[iL];
-                bprotonsigma = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_sigma[iL];
-                nhits_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_nhits[iL];
-                dca_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_dca[iL];
-                bprotonm2 = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_m2[iL];
-
-                // cout << " finish fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
+                  chi2primary_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_chi2prim[iL];
+                  bprotonsigma = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_sigma[iL];
+                  nhits_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_nhits[iL];
+                  dca_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_dca[iL];
+                  bprotonm2 = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_m2[iL];
                 if (filltree) 
-                {  htriton3_tree->Fill();} 
+                {
+                  // cout << " finish fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
+                  htriton3_tree->Fill();
+                } 
               }                
             }
           }
@@ -2012,7 +2049,7 @@ Int_t StKFParticleAnalysisMaker::Make()
 
         if((particle.GetPDG()==103004 ||particle.GetPDG()==3007 || particle.GetPDG()==103005 || particle.GetPDG()==3006) && isGoodEvent){
 
-          if(particle.GetMass()>3.05 && particle.GetPDG()==103004) continue;
+          if((particle.GetMass()>3.05 || particle.GetMass()<2.95)&& particle.GetPDG()==103004) continue;
           if(particle.GetMass()>3.2 && particle.GetPDG()==103005) continue;
           if(particle.GetMass()>5.1 && particle.GetPDG()==3007) continue;
 
@@ -2034,6 +2071,7 @@ Int_t StKFParticleAnalysisMaker::Make()
           ht_chi2 = double(tempSIMDParticle.Chi2()[0]);
           ht_NDF = double(tempSIMDParticle.NDF()[0]);
           ht_chi2ndf = particle.Chi2()/particle.NDF();
+          // cout <<particle.NDF() << endl;
 
           for(int iDaughter=0; iDaughter<particle.NDaughters(); iDaughter++)
           {
@@ -2151,7 +2189,7 @@ Int_t StKFParticleAnalysisMaker::Make()
 
           // cout<<"dca_pion:"<<dca_pion<<" "<<dca_pion2<<endl;
           // cout<<"dca_proton:"<<dca_proton<<" "<<dca_proton2<<endl;
-          // cout<<"dca_deuteron:"<<dca_deuteron<< " "<<dca_deuteron2<<endl;
+          // cout<<"dca_deuteron:"<<dca_deuteron-dca_deuteron2<<endl;
 
           bmcpx=-999;bmcpy=-999;bmcpz=-999;
 
@@ -2913,8 +2951,12 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
 
   //construct pipd
   KFParticleSIMD tempDeutSIMD(deuteron);
-  KFParticleSIMD tempSIMDParticle= tempLambdaSIMD;
-  tempDeutSIMD.TransportToPoint(tempLambdaSIMD.Parameters());
+  KFParticleSIMD tempProtonSIMD(proton);
+  KFParticleSIMD tempPiSIMD(pion);
+  KFParticleSIMD tempSIMDParticle = tempPiSIMD;
+  tempSIMDParticle += tempProtonSIMD;
+  tempSIMDParticle.SetPDG(deuteron.GetPDG()>0? 103004 : -103004);
+  tempDeutSIMD.TransportToPoint(tempSIMDParticle.Parameters());
   tempSIMDParticle += tempDeutSIMD;
   // cout << tempSIMDParticle.NDaughters()<< endl;
   // tempSIMDParticle.SetPDG(deuteron.GetPDG()>0? 103004 : -103004);
@@ -2922,9 +2964,7 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
 
   if ((tempLambdaSIMD.GetDistanceFromParticle(tempDeutSIMD) < float_v(fDistanceCut)).isEmpty()) return false;
 
-  ht_chi2topo = double(tempSIMDParticle.Chi2()[0])/double(tempSIMDParticle.NDF()[0]);
-  ht_chi2 = double(tempSIMDParticle.Chi2()[0]);
-  ht_NDF = double(tempSIMDParticle.NDF()[0]);
+
   float_v l,dl;
   float_m isParticleFromVertex;
   tempSIMDParticle.GetDistanceToVertexLine(pv, l, dl, &isParticleFromVertex);
@@ -2932,26 +2972,38 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
   ht_l = l[0];
   ht_dl = dl[0];
 
-  deuteron.TransportToParticle(deuteron);
-  KFParticle particle(v_lambda, deuteron);
-  particle.SetPDG(deuteron.GetPDG()>0? 103004 : -103004);
+  // deuteron.TransportToParticle(v_lambda);
+  // KFParticle particle=v_lambda;
+  // particle.SetPDG(deuteron.GetPDG()>0? 103004 : -103004);
+  // particle+= deuteron;
+  KFParticle particle;
+  tempSIMDParticle.GetKFParticle( particle, 0);
+  // cout <<particle.GetMass() << endl;
   ht_chi2ndf = particle.Chi2()/particle.NDF();
-  if (particle.GetMass()>3.05) return false;
+  if (particle.GetMass()>3.05 || particle.GetMass()<2.95) return false;
 
   ht_bdfvtx = tempSIMDParticle.GetDistanceFromVertex(pv)[0];
   KFParticleSIMD tempMotherTopo = tempSIMDParticle;
   tempMotherTopo.SetProductionVertex(pv);
   ht_bdfvtx2 = tempMotherTopo.GetDistanceFromVertex(pv)[0];
+  ht_chi2topo = double(tempMotherTopo.Chi2()[0])/double(tempMotherTopo.NDF()[0]);
+  ht_chi2 = double(tempMotherTopo.Chi2()[0]);
+  ht_NDF = double(tempMotherTopo.NDF()[0]);
 
   if ((tempSIMDParticle.Chi2()/static_cast<float_v>(tempSIMDParticle.NDF()) < float_v(cut[2])).isEmpty()  ) return false; 
+  // cout <<"pass chi2NDF cut" << endl;
   if (KFPMath::Finite(tempSIMDParticle.GetChi2()).isEmpty()) return false;
+  // cout <<"pass chi2 finit cut" << endl;
   if ( (tempSIMDParticle.GetChi2() > 0.0f).isEmpty() ) return false;
+  // cout <<"pass chi2 >0 cut" << endl;
   if ( (tempSIMDParticle.GetChi2() == tempSIMDParticle.GetChi2()).isEmpty() ) return false; // copy from KFParticleFinder function
   if (((tempMotherTopo.GetChi2()/float_v(tempMotherTopo.GetNDF()))<cut[1]).isEmpty() ) return false;
+  // cout <<"pass masstopo NDF cut" << endl;
   if (!(ht_ldl>cut[0])) return false; // not primary
   if (!(ht_l<200.)) return false;
   if (!(ht_l>fLCut)) return false;
   if (isParticleFromVertex.isEmpty()) return false;
+  // cout <<"pass cut" << endl;
 
   bparticleid   = particle.GetPDG();
   bparticlemass = particle.GetMass();
@@ -3011,6 +3063,9 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
   dca_pion2 = pion.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
   dca_proton2 = proton.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
   dca_deuteron2 = deuteron.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+  // chi2primary_d = deuteron.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+  // chi2primary_pi = pion.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+  // chi2primary_proton = proton.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
 
   return true;
 }

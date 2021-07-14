@@ -291,9 +291,11 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     if (mcState==0) weight = reweight; 
     double ppi_pt = sqrt(bpx*bpx+bpy*bpy); // lambda case 
     if (mode==0) ppi_pt= sqrt(bpionpx*bpionpx+bpionpy*bpionpy+bprotonpy*bprotonpy+bprotonpx*bprotonpx);
-    if (chi2primary_d<2) continue;
-    if (mass_01>1.15 || mass_01< 1.) continue;
-    if (bparticleid<0) continue;
+    if (mode==0) {
+      if (bparticlemass<2.95 || bparticlemass > 3.05) continue;
+      if (mass_01>1.15 || mass_01< 1.05) continue;
+    }
+    if (bparticleid<0) continue; //currently only look at particle
 
     //compare H3L->ppi and Lambda->ppi
     if ((mode==0 && bismc==mcState) || (mode==1 && bismc==mcState) ){ 
@@ -336,8 +338,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       /* bool passTopoCuts=1; */
       // bool passTopoCuts =  ht_l >8 && ht_ldl>10 && dca_pion>1.5 && dca_proton>0.5 && dca_proton<5 && dca_deuteron<2 && ht_chi2topo<10 && 
                            // ht_chi2ndf<4.0 && mass_01 <1.15;
-      bool passTopoCuts =  ht_l >10 && ht_ldl>8 && chi2primary_d > 3 && ht_chi2topo<10 && ht_chi2ndf<10 && mass_01<1.15 && mass_01>1;
-      // bool passTopoCuts =  ht_l >10 && ht_ldl>8 &&chi2primary_d>3 && ht_chi2topo<10 && ht_chi2ndf<10;
+      bool passTopoCuts =  ht_l >10 && ht_ldl>8  && ht_chi2topo<10 && ht_chi2ndf<10;
       if ( passTopoCuts) hptH3Lmass->Fill(H3LpT, bparticlemass, weight); 
     }
   }

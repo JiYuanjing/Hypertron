@@ -375,7 +375,7 @@ void drawMixData()
 {
   SetsPhenixStyle();
   TCanvas* c = new TCanvas("c","c");
-  TPDF* pdf = new TPDF("LambdaDeu_rotate.pdf");
+  TPDF* pdf = new TPDF("MixEventQA.pdf");
   pdf->Off();
 
   TFile *f1 = TFile::Open("fout_H3L_data.root"); 
@@ -383,6 +383,7 @@ void drawMixData()
   TH1F* hsig = (TH1F*)h2sig->ProjectionY("hsig");
   
   TFile *f2 = TFile::Open("fout_H3L_data_ME.root"); 
+  // TFile *f2 = TFile::Open("fout_H3L_data_SE.root"); 
   TH2F* h2bk = (TH2F*)f2->Get("hptH3Lmass")->Clone("hptH3Lmass_ME");
   TH1F* hbk = (TH1F*)h2bk->ProjectionY("hbk");
   
@@ -391,7 +392,7 @@ void drawMixData()
   double bk_sb =  hbk->Integral(hbk->GetXaxis()->FindBin(2.95), hbk->GetXaxis()->FindBin(2.98)) + hbk->Integral(hbk->GetXaxis()->FindBin(3.0),  hbk->GetXaxis()->FindBin(3.04));
   // double bk_sb =  hbk->Integral(hbk->GetXaxis()->FindBin(2.95), hbk->GetXaxis()->FindBin(2.98)) ;
   double scale = sig_sb/bk_sb;
-  cout <<scale << endl;
+  cout <<1./scale << endl;
   hbk->Scale(scale);
 
   hsig->Draw();
