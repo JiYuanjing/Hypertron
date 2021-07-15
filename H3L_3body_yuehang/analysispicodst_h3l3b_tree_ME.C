@@ -18,6 +18,8 @@ void analysispicodst_h3l3b_tree_ME(TString picolist="onetest.list",  TString out
 #else
   //  gSystem->SetFPEMask(kInvalid | kDivByZero | kOverflow );
   gROOT->LoadMacro("lMuDst.C");
+  // gSystem->Load("StRefMultCorr.so");
+  // gSystem->Load("StPileupUtil");
 
   TString input;
   TString output;
@@ -97,8 +99,10 @@ void analysispicodst_h3l3b_tree_ME(TString picolist="onetest.list",  TString out
   kfpAnalysis->SetDataSet(3);  
   // kfpAnalysis->StoreTMVANtuples();
 
-  // run mix event will auto run flow analysis and centrality, need set flow file
+  // run mix event will auto run centrality, need set flow file
+  kfpAnalysis->RunCentralityAnalysis();  
   kfpAnalysis->AddFlowFile("test_v2.root");
+  kfpAnalysis->RunFlowAnalysis();
   kfpAnalysis->RunMixEvent(5);
 
   chain->Init();
@@ -117,10 +121,11 @@ void analysispicodst_h3l3b_tree_ME(TString picolist="onetest.list",  TString out
   StKFParticleInterface::instance()->SetLdLCut2D(3);
 
   //very loose
-  StKFParticleInterface::instance()->SetChiPrimaryCut(3);
+  // StKFParticleInterface::instance()->SetChiPrimaryCut(3);
+  StKFParticleInterface::instance()->SetChiPrimaryCut(0);
 
-  //this cut seems necessary for 3BODY decay
-  StKFParticleInterface::instance()->SetChiPrimaryCut2D(3);
+  // StKFParticleInterface::instance()->SetChiPrimaryCut2D(3);
+  StKFParticleInterface::instance()->SetChiPrimaryCut2D(0);
 
   //these cuts are not only for charm ...
   StKFParticleInterface::instance()->SetLdLCutCharmManybodyDecays(3);

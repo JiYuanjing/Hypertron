@@ -5,9 +5,22 @@ input="ana_tree.root"
 # input="dataME_test2.root"
 
 #void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1, int const isMix=0)
-root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data.root\",0,0\)
-root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME.root\",0,1\)
-root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_SE.root\",0,2\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data.root\",0,0\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME.root\",0,1\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_SE.root\",0,2\)
+
+root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_check.root\",0,0\)
+root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME_check.root\",0,1\)
+root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_SE_check.root\",0,2\)
+
+
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_pcut.root\",0,0\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME_pcut.root\",0,1\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_SE_pcut.root\",0,2\)
+
+
+
+
 # for i in `ls list/*.list_*`; do 
 #   root -b -q readtree.C\(\"${i}\",0,\"${i}_data.root\"\,0\)
 # done

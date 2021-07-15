@@ -27,6 +27,7 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
 
   if(isPico)
   {
+    //        input = "/star/u/yhleung2/00.test/KFParticle_NewPicoFormat/datafiles/st_physics_19141051_raw_1000007.picoDst.root",      
     input = picolist;
 
     output = NULL;
@@ -34,7 +35,10 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
   }
   else
   {
+    //    input = "/star/u/mzyzak/KFParticle_NewPicoFormat/inputData/*.MuDst.root", 
     input = picolist;    
+    //    input = "/star/embed/embedding/AuAu27_production_2011/Lambda_214_2012202/P11id.SL11d_embed/2011/177/12177044/st_physics_adc_12177044_raw_3490002.MuDst.root";
+    //output = "mu.root";
     output = NULL;
     lMuDst(-1,input.Data(),"ry2016,picoEvt,RMuDst,mysql,kfpAna,quiet,nodefault",output.Data());
   }
@@ -49,12 +53,16 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
   if(year == 2016)
   {
     kfpAnalysis->UseTMVA();
+    // D0->Kpi
+    //    kfpAnalysis->SetTMVABinsD0("0:2:3:4:5:6:7:8:9","-1:1000");
+    //    kfpAnalysis->SetTMVAcutsD0("/gpfs01/star/pwg/kocmic/TMVA/Centrality/TMVA/D0/weights/TMVAClassification_0_1_pt0_80_BDT.weights.xml", 0.075, 0);
   }
 
   //  kfpAnalysis->CollectPIDHistograms();
   //  kfpAnalysis->CollectTrackHistograms();
 
   kfpAnalysis->SetDataSet(3);  
+  kfpAnalysis->RunCentralityAnalysis();  
 
   //  kfpAnalysis->StoreTMVANtuples();
 
@@ -66,6 +74,7 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
 
   //default
   //  StKFParticleInterface::instance()->SetChiPrimaryCut(10);
+
   StKFParticleInterface::instance()->SetMaxDistanceBetweenParticlesCut(5);
 
   //loose
@@ -73,15 +82,27 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
   StKFParticleInterface::instance()->SetLdLCut2D(3);
 
   //very loose
-  StKFParticleInterface::instance()->SetChiPrimaryCut(3);
+  // StKFParticleInterface::instance()->SetChiPrimaryCut(3);
+  StKFParticleInterface::instance()->SetChiPrimaryCut(0);
 
-  //this cut seems necessary for 3BODY decay
-  StKFParticleInterface::instance()->SetChiPrimaryCut2D(3);
+  // StKFParticleInterface::instance()->SetChiPrimaryCut2D(3);
+  StKFParticleInterface::instance()->SetChiPrimaryCut2D(0);
 
 
   StKFParticleInterface::instance()->SetLdLCutCharmManybodyDecays(3);
   StKFParticleInterface::instance()->SetChi2TopoCutCharmManybodyDecays(10);
   StKFParticleInterface::instance()->SetChi2CutCharmManybodyDecays(10);
+
+  /*
+     StKFParticleInterface::instance()->SetChi2Cut2D(20);
+     StKFParticleInterface::instance()->SetChiPrimaryCut(3);
+     StKFParticleInterface::instance()->SetChiPrimaryCut2D(3);
+     StKFParticleInterface::instance()->SetChiPrimaryCut(3);
+     StKFParticleInterface::instance()->SetChiPrimaryCut2D(3);
+     StKFParticleInterface::instance()->SetLdLCut2D(3);
+     StKFParticleInterface::instance()->SetLdLCutXiOmega(3);
+     StKFParticleInterface::instance()->SetChi2TopoCutXiOmega(15);
+  */  
 
   //Add decays to the reconstruction list
   //  StKFParticleInterface::instance()->AddDecayToReconstructionList(  310);
@@ -98,7 +119,8 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
 
   //StKFParticleInterface::instance()->AddDecayToReconstructionList(3003);
 
-  StKFParticleInterface::instance()->AddDecayToReconstructionList( 3122);//lambda0  
+  // StKFParticleInterface::instance()->AddDecayToReconstructionList( 3122);
+  StKFParticleInterface::instance()->AddDecayToReconstructionList( 3012);
   StKFParticleInterface::instance()->AddDecayToReconstructionList( 103004);
 
 
@@ -108,7 +130,6 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
   //    StKFParticleInterface::instance()->AddDecayToReconstructionList(-3005);
   //StKFParticleInterface::instance()->SetMixedEventAnalysis();
 
-  //set rotation
   //StKFParticleInterface::instance()->SetRotation();
   //StKFParticleInterface::instance()->SetRotationAngle(TMath::Pi());
   //StKFParticleInterface::instance()->SetRotationPID(-211);//pi minus
@@ -148,10 +169,10 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
   }
 
   // chain->EventLoop(nevent);
-  for (int iEvent = 0; iEvent < 2000; ++iEvent)
+  for (int iEvent = 0; iEvent < nevent; ++iEvent)
   {
     chain->Clear();
-    if(iEvent && iEvent%100 == 0) cout<<"... finished processing "<<iEvent<<" events."<<endl;
+    if(iEvent && iEvent%10000 == 0) cout<<"... finished processing "<<iEvent<<" events."<<endl;
 
     int iret = chain->Make();
     if (iret)
@@ -161,6 +182,7 @@ void analysispicodst_h3l3b_rotate_tree(TString picolist="test.list",  TString ou
     }
   }
   cout<<"Finished processing "<<nevent<<" events."<<endl;
+
 
 #endif
 

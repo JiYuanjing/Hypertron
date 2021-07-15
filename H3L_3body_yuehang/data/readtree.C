@@ -317,8 +317,14 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       hptH3L_dpDca->Fill( H3LpT, v_12_dca, weight);
       /* weight=1; */
       /* bool passTopoCuts=1; */
-      bool passTopoCuts =  ht_l >8 && ht_ldl>10 && dca_pion>1.5 && dca_proton>0.5 && dca_proton<5 && dca_deuteron<2 && ht_chi2topo<10 && 
-                           ht_chi2ndf<4.0 && mass_01 <1.15;
+      // bool passTopoCuts =  ht_l >8 && ht_ldl>5 &&  ht_chi2topo<10 && 
+      //                      ht_chi2ndf<4.0 &&  && mass_01 <1.15;
+       double p_p = sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy+bprotonpz*bprotonpz);
+       double p_d = sqrt(bdpx*bdpx+bdpy*bdpy+bdpz*bdpz);
+       bool passTopoCuts =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && 
+                            fabs(p_p)< 2 && fabs(p_d)<3 && 
+                            // dca_deuteron <2 && dca_proton<5 && dca_proton>0.7 && 
+                            ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5;
       /* bool passTopoCuts =  ht_l >10 && ht_ldl>8 && chi2primary_d > 3 && ht_chi2topo<5 && ht_chi2ndf<2.5; */
       /* bool passTopoCuts =  ht_l >10 && ht_ldl>4 && chi2primary_d > 3 && ht_chi2topo<5 && ht_chi2ndf<2.5; */
       if ( passTopoCuts) hptH3Lmass->Fill(H3LpT, bparticlemass, weight); 

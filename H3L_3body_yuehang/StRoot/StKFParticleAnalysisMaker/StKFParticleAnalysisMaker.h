@@ -443,11 +443,13 @@ bool FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deu
   void RunMixEvent(int buffersize)       
   { 
       fMixEvent= true; 
-      fFlowAnalysis = true;
+      // fFlowAnalysis = true;
       fRunCentralityAnalysis = true;
       fMixEventBufferSize = buffersize;
   }
 
+  Int_t Centrality(int gRefMult );
+  Double_t FitWeight(Double_t refMult);
   
   void RunCentralityAnalysis() { fRunCentralityAnalysis = true; }
   void SetCentralityFile(TString file) { fCentralityFile = file; }

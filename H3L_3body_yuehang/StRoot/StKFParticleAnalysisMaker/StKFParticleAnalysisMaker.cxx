@@ -1196,21 +1196,11 @@ Int_t StKFParticleAnalysisMaker::Make()
 
   if(fRunCentralityAnalysis)
   {
-    if(fIsPicoAnalysis){
-      //somehow this tool not work with TFG18n 
-      //read centrality from flow tree instead
-      // mPileupTool->initEvent(fPicoDst);
-      // countrefmult = mPileupTool->get_refMultPrim();
-      // centralityBin  = mPileupTool->get_centrality9();  
-      // cent9 = centralityBin;  
+      centralityBin = Centrality(countrefmult);
+      cent9 = centralityBin;  
       // reweight = mPileupTool->get_centralityWeight();
-      // if (centralityBin<0) isGoodEvent= false;
-    }
-    else{
-      //no for 3GeV embedding
-      //will add manually later
-
-    }
+      if (centralityBin<0) isGoodEvent= false;
+      else reweight = FitWeight(countrefmult);
   }
 
   if(fFlowAnalysis)
@@ -1237,14 +1227,15 @@ Int_t StKFParticleAnalysisMaker::Make()
     {
       fFlowChain->GetEvent(fFlowMap[GetUniqueEventId(runId, eventId)]);       
     }
-    centralityBin = fCentrality;
-    cent9 = centralityBin;
-    reweight = gweight;
     EPbin = getEventPlaneBin(psi_1_EPD_4);
     //cout<<"fFlowRunId:"<<fFlowRunId<<" "<< fFlowEventId<< " "<< fCentrality<<" "<< endl;
     //cout<<"flow:"<<psi_1_EPD_0 <<" "<< psi_1_EPD_1<<" "<<psi_1_EPD_2<<" "<<psi_1_EPD_3<<endl;
     if (EPbin<0) isGoodEvent = false; 
   }
+  else if (!fFlowAnalysis) 
+  {
+    EPbin = 0;
+  } 
 
   if (cent9<0) isGoodEvent=false;
 
@@ -1500,7 +1491,7 @@ Int_t StKFParticleAnalysisMaker::Make()
           // cout << "push current event into buffer"<<endl;
           //fot test
           bisMix=2;
-          cout <<newEvent.p_v.size()<<" "<<newEvent.p_v_dca.size() << endl;
+          // cout <<newEvent.p_v.size()<<" "<<newEvent.p_v_dca.size() << endl;
             for (int id = 0;id<newEvent.d_v.size();id++){
               for (int iL = 0;iL<newEvent.p_v.size();iL++){
                 // cout << " start fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
@@ -2911,27 +2902,9 @@ void StKFParticleAnalysisMaker::FillDaughterInfo(KFParticle& daughter, int track
 }
 bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deuteron, KFParticle& PPi, double dVx, double dVy, double dVz, int mode)
 {
+  if (PPi.GetPDG()< 0 || deuteron.GetPDG() <0) return false; //only look at particle
   float fDistanceCut=5, fLCut=1;
   float cut[3]={3,10,10};  // ldl, chi2topo, chi2geo
-
-  if (mode == 2){
-    PPi.X()=PPi.GetX()+dVx;
-    PPi.Y() = PPi.GetY()+dVy;
-    PPi.Z() = PPi.GetZ()+dVz;
-    
-    pion.X() = pion.GetX()+dVx;
-    pion.Y() = pion.GetY()+dVy;
-    pion.Z() = pion.GetZ()+dVz;
-
-    proton.X() = proton.GetX()+dVx;
-    proton.Y() = proton.GetY()+dVy;
-    proton.Z() = proton.GetZ()+dVz;
-  }
-  else if (mode ==1){
-    deuteron.X() = deuteron.GetX()+dVx;
-    deuteron.Y() = deuteron.GetY()+dVy;
-    deuteron.Z() = deuteron.GetZ()+dVz;
-  }
 
   //pip pair
   KFParticle v_lambda(PPi);
@@ -2951,10 +2924,11 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
 
   //construct pipd
   KFParticleSIMD tempDeutSIMD(deuteron);
-  KFParticleSIMD tempProtonSIMD(proton);
-  KFParticleSIMD tempPiSIMD(pion);
-  KFParticleSIMD tempSIMDParticle = tempPiSIMD;
-  tempSIMDParticle += tempProtonSIMD;
+  // KFParticleSIMD tempProtonSIMD(proton);
+  // KFParticleSIMD tempPiSIMD(pion);
+  KFParticleSIMD tempSIMDParticle = tempLambdaSIMD;
+  // KFParticleSIMD tempSIMDParticle = tempPiSIMD;
+  // tempSIMDParticle += tempProtonSIMD;
   tempSIMDParticle.SetPDG(deuteron.GetPDG()>0? 103004 : -103004);
   tempDeutSIMD.TransportToPoint(tempSIMDParticle.Parameters());
   tempSIMDParticle += tempDeutSIMD;
@@ -2963,7 +2937,6 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
   ht_ndaughters = 3;
 
   if ((tempLambdaSIMD.GetDistanceFromParticle(tempDeutSIMD) < float_v(fDistanceCut)).isEmpty()) return false;
-
 
   float_v l,dl;
   float_m isParticleFromVertex;
@@ -2989,6 +2962,13 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
   ht_chi2topo = double(tempMotherTopo.Chi2()[0])/double(tempMotherTopo.NDF()[0]);
   ht_chi2 = double(tempMotherTopo.Chi2()[0]);
   ht_NDF = double(tempMotherTopo.NDF()[0]);
+  // float_v l2,dl2;
+  // tempMotherTopo.GetDistanceToVertexLine(pv, l2, dl2);
+  // double ht_ldl2 = l2[0]/dl2[0];
+  // double ht_l2 = l[0];
+  // double ht_dl2 = dl[0];
+  // cout<<"hldl: topo:" <<ht_ldl2<<" no pv:"<<ht_ldl<<" ht_l topo:"<<ht_l2<<" no:"<<ht_l << endl;
+  // after test, ht_l same for two method, but dl would be smaller after set pv
 
   if ((tempSIMDParticle.Chi2()/static_cast<float_v>(tempSIMDParticle.NDF()) < float_v(cut[2])).isEmpty()  ) return false; 
   // cout <<"pass chi2NDF cut" << endl;
@@ -3004,6 +2984,8 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
   if (!(ht_l>fLCut)) return false;
   if (isParticleFromVertex.isEmpty()) return false;
   // cout <<"pass cut" << endl;
+  //just to be consistent with minitree
+  // tempMotherTopo.GetDistanceToVertexLine(pv, l, dl);
 
   bparticleid   = particle.GetPDG();
   bparticlemass = particle.GetMass();
@@ -3155,4 +3137,43 @@ int StKFParticleAnalysisMaker::getVtxBin(float vx, float vy, float vz)
   // }
   //
   // return ibX+ibY*binX+ibZ*binX*binY;
+}
+Int_t StKFParticleAnalysisMaker::Centrality(int gRefMult )
+{
+  int centrality;
+  int centFull[10]={5, 9, 16, 26, 41, 60, 86, 119, 142, 195};
+  if (gRefMult>=centFull[8]) centrality=8;
+  else if (gRefMult>=centFull[7] && gRefMult<centFull[8] ) centrality=7;
+  else if (gRefMult>=centFull[6] && gRefMult<centFull[7] ) centrality=6;
+  else if (gRefMult>=centFull[5] && gRefMult<centFull[6] ) centrality=5;
+  else if (gRefMult>=centFull[4] && gRefMult<centFull[5] ) centrality=4;
+  else if (gRefMult>=centFull[3] && gRefMult<centFull[4] ) centrality=3;
+  else if (gRefMult>=centFull[2] && gRefMult<centFull[3] ) centrality=2;
+  else if (gRefMult>=centFull[1] && gRefMult<centFull[2] ) centrality=1;
+  else if (gRefMult>=centFull[0] && gRefMult<centFull[1] ) centrality=0;
+  else centrality = 9;
+
+  return centrality;
+}
+Double_t StKFParticleAnalysisMaker::FitWeight(Double_t refMult)
+{
+  Double_t Weight = 1.0;
+
+  Double_t par0 =   1.31492e+00 ;
+  Double_t par1 =  -1.66622e+01 ;
+  Double_t par2 =   2.09257e+00 ;
+  Double_t par3 =  -4.35674e+00 ;
+  Double_t par4 =  -2.38170e-03 ;
+  Double_t par5 =   8.48711e+02 ;
+  Double_t par6 =   4.95939e-06 ;
+
+  if (
+      refMult != -(par3 / par2) // avoid denominator = 0
+      && refMult< 70
+     )
+  {
+    Weight = par0 + par1/(par2*refMult + par3) + par4*(par2*refMult + par3) + par5/pow(par2*refMult+par3 ,2) + par6*pow(par2*refMult+par3 ,2); // Parametrization of MC/data R    efMult ratio
+  }
+
+  return Weight;
 }
