@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<job fileListSyntax="paths" maxFilesPerProcess="40" simulateSubmission="false">
+
+<stdout URL="file:./log/sched$JOBID.out" />
+ <stderr URL="file:./log/sched$JOBID.err" />
+
+ <Generator>
+   <Location>./report/</Location>
+   <ScriptLocation>./csh/</ScriptLocation>
+   <ListLocation>./list/</ListLocation>
+ </Generator>
+
+<command>
+  source ~jiyj/.cshrc
+  root -b -q -l readtree.C+\(\"${FILELIST}\",0,\"fout_H3L_data_KF_${JOBINDEX}.root\",0,0\)  &gt;&amp; ${JOBID}_1.log
+  root -b -q -l readtree.C+\(\"${FILELIST}\",0,\"fout_H3L_data_ME_${JOBINDEX}.root\",0,1\)  &gt;&amp; ${JOBID}_2.log
+  root -b -q -l readtree.C+\(\"${FILELIST}\",0,\"fout_H3L_data_SE_${JOBINDEX}.root\",0,2\)  &gt;&amp; ${JOBID}_3.log
+
+</command>
+
+<input URL="filelist:&dir;/&listOfFiles;" nFiles="all"/>
+<output fromScratch="fout_H3L_data_SE_*.root" toURL="&dir;/out_SE/" />
+<output fromScratch="fout_H3L_data_ME_*.root" toURL="&dir;/out_ME/" />
+<output fromScratch="fout_H3L_data_KF_*.root" toURL="&dir;/out_KF/" />
+<output fromScratch="*.log" toURL="&dir;/log/" />
+
+<SandBox installer="ZIP">
+	<Package name="ME_ana">
+    <File>file:./Hists.h</File>
+    <File>file:./tree.h</File>
+    <File>file:./readtree.C</File>
+    <!-- <File>file:./&#38;listOfFiles;</File> -->
+	</Package>
+</SandBox>
+
+</job>

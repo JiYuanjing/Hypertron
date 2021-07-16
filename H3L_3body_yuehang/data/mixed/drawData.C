@@ -4,6 +4,7 @@ void Norm(TH1F* h)
   h->Scale(1./h->Integral()*h->GetBinWidth(1));
   h->Scale(1./h->GetMaximum());
   h->SetDirectory(0);
+  h->GetYaxis()->SetTitle("Arb. Unit");
 }
 
 /* void projAndComp(TH2F* h2H3L, TH2F* h2La,TCanvas* c,TPDF* pdf ) */
@@ -48,6 +49,8 @@ void projAndComp(TString name, TFile* fH3L, TFile* fLa, TCanvas* c,TPDF* pdf,TSt
     /* h1H3->DrawCopy(drawstyle.Data()); */
     h1H3->DrawCopy("");
     h1La->DrawCopy((drawstyle+"same").Data()); 
+    // TRatioPlot* rp = new TRatioPlot(h1La, h1H3);
+    // gPad->SetTicks(0, 1);    rp->Draw();
     drawLatex( 0.18, 0.88, Form("%0.1f<(%s) p_{T}<%0.1f GeV/c", ptedge[i],text.Data(),ptedge[i+1]),0.055);
     TLegend* l = new TLegend(0.65,0.68,0.9,0.87);
     l->AddEntry( h1La, legtitle2.Data(), "pl");
@@ -375,14 +378,14 @@ void drawMixData()
 {
   SetsPhenixStyle();
   TCanvas* c = new TCanvas("c","c");
-  TPDF* pdf = new TPDF("MixEventQA_pcut.pdf");
+  TPDF* pdf = new TPDF("MixEventQA_check.pdf");
   pdf->Off();
 
-  TFile *f1 = TFile::Open("fout_H3L_data_pcut.root"); 
+  TFile *f1 = TFile::Open("fout_H3L_data_large.root"); 
   TH2F* h2sig = (TH2F*)f1->Get("hptH3Lmass")->Clone("hptH3Lmass_sig");
   TH1F* hsig = (TH1F*)h2sig->ProjectionY("hsig");
   
-  TFile *f2 = TFile::Open("fout_H3L_data_ME_pcut.root"); 
+  TFile *f2 = TFile::Open("fout_H3L_data_ME_large.root"); 
   // TFile *f2 = TFile::Open("fout_H3L_data_SE.root"); 
   TH2F* h2bk = (TH2F*)f2->Get("hptH3Lmass")->Clone("hptH3Lmass_ME");
   TH1F* hbk = (TH1F*)h2bk->ProjectionY("hbk");
@@ -417,7 +420,7 @@ void drawMixData()
   leg->AddEntry(hbk, "mix-event(ME)","pl");
   leg->AddEntry(hsig, "same-event(SE)","pl");
   leg->Draw();
-  drawLatex( 0.2,0.6,Form("SE/ME=%0.2f", scale), 0.055);
+  drawLatex( 0.2,0.6,Form("ME/SE=%0.2f", 1./scale), 0.055);
  
   addpdf(pdf);
   
@@ -455,12 +458,12 @@ void drawSEData()
   TPDF* pdf = new TPDF("SameEventQA_check.pdf");
   pdf->Off();
 
-  TFile *f1 = TFile::Open("fout_H3L_data_check.root"); 
+  TFile *f1 = TFile::Open("fout_H3L_data_large.root"); 
   TH2F* h2sig = (TH2F*)f1->Get("hptH3Lmass")->Clone("hptH3Lmass_sig");
   TH1F* hsig = (TH1F*)h2sig->ProjectionY("hsig");
   
   // TFile *f2 = TFile::Open("fout_H3L_data_ME.root"); 
-  TFile *f2 = TFile::Open("fout_H3L_data_SE_check.root"); 
+  TFile *f2 = TFile::Open("fout_H3L_data_SE_large.root"); 
   TH2F* h2bk = (TH2F*)f2->Get("hptH3Lmass")->Clone("hptH3Lmass_ME");
   TH1F* hbk = (TH1F*)h2bk->ProjectionY("hbk");
   
@@ -484,7 +487,7 @@ void drawSEData()
   leg->AddEntry(hsig, "Official KF","pl");
   leg->AddEntry(hbk, "My Contruction","pl");
   leg->Draw();
-  drawLatex( 0.2,0.6,Form("KF/My=%0.4f", scale), 0.055);
+  drawLatex( 0.2,0.6,Form("My/KF=%0.4f", 1./scale), 0.055);
  
   addpdf(pdf);
   

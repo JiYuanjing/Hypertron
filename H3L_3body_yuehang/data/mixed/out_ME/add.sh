@@ -5,10 +5,10 @@
 ############################
 
 tmp="tmplist.txt"
-out="../dataME_test2.root"
-N=`ls *_ana.root | wc -l`
+out="../fout_H3L_data_ME_large.root"
+N=`ls *.root | wc -l`
 rm -rf ${tmp}
-ls *_ana.root > ${tmp}
+ls *.root > ${tmp}
 if [ -f "${out}" ]; then
     echo "${out} already exit"
     exit 0

@@ -7,3 +7,4 @@ production/*
 StRoot_forlook
 StRoot_mixed
 star_lib_forcheck
+*.swp

@@ -223,3 +223,6 @@ float b2mcpz;
   float bmcrawpl;
   float bmcpl;
   float bmcl;
+
+
+  int bisMix;
