@@ -25,6 +25,8 @@
 #include "StRoot/StRefMultCorr/StRefMultCorr.h"
 #include "StRoot/StRefMultCorr/CentralityMaker.h"
 
+#include "TRandom.h"
+
 ClassImp(StKFParticleInterface);
 StKFParticleInterface *StKFParticleInterface::fgStKFParticleInterface = 0;
 StKFParticleInterface::StKFParticleInterface(): 
@@ -862,7 +864,7 @@ bool StKFParticleInterface::ProcessEvent(StPicoDst* picoDst, std::vector<int>& t
   vector<int> primaryTrackList;
 
   StPicoEvent* picoEvent = picoDst->event();
-  if(!picoEvent) return 0;
+  if(!picoEvent) {cout << "error pico event"<< endl; return 0;}
   //cout<<"Event No:"<<picoEvent->eventId()<<endl;
 
   //b                                
@@ -879,7 +881,11 @@ bool StKFParticleInterface::ProcessEvent(StPicoDst* picoDst, std::vector<int>& t
 
   primVtx_tmp.SetCovarianceMatrix( dx*dx, 0, dy*dy, 0, 0, dz*dz );
   primaryVertex = KFVertex(primVtx_tmp);
-  if(!IsGoodPV(primaryVertex)) return 0;
+  if(!IsGoodPV(primaryVertex)) 
+  { 
+    cout <<"not good PV" << endl;
+    return 0;
+  }
   //   if(IsGoodPV(primaryVertex)){cout<<"Good PV!"<<endl; }
 
 
@@ -982,9 +988,12 @@ bool StKFParticleInterface::ProcessEvent(StPicoDst* picoDst, std::vector<int>& t
   fParticlesPdg.resize(nPartSaved);
   fNHftHits.resize(nPartSaved);
 
-  //  if( 10*primaryTrackList.size() < (nUsedTracks - primaryTrackList.size()) ) cout<<"primaryTrackList.size():"<<primaryTrackList.size()<<" "<<nUsedTracks<<endl;
 
-  if( fCleanLowPVTrackEvents && ( 10*primaryTrackList.size() < (nUsedTracks - primaryTrackList.size()) ) ) return 0;
+  if( fCleanLowPVTrackEvents && ( 10*primaryTrackList.size() < (nUsedTracks - primaryTrackList.size()) ) ) 
+  {
+    // cout<<"primaryTrackList.size():"<<primaryTrackList.size()<<" "<<nUsedTracks<<endl;
+    return 0;
+  }
 
   const Double_t field = picoEvent->bField();  
   SetField(field);
@@ -1001,6 +1010,34 @@ bool StKFParticleInterface::ProcessEvent(StPicoDst* picoDst, std::vector<int>& t
       }
     }
   }
+if(fRotation){
+   for(int iTr=0; iTr<nPartSaved; iTr++){
+   if(fParticlesPdg[iTr]==fRotationPID){
+       if (fRotationAngle==-1) {
+          TRandom *tRandom = new TRandom();
+          tRandom->SetSeed(0);
+          fRotationAngle = tRandom->Uniform(0,TMath::Pi());
+          delete tRandom;
+        }
+      else if (fRotationAngle==-2) {
+          TRandom *tRandom = new TRandom();
+          tRandom->SetSeed(0);
+          fRotationAngle = tRandom->Uniform(180-30,180+30);
+          fRotationAngle = fRotationAngle * 3.14 / 180.;
+          delete tRandom;
+        }
+      else if (fRotationAngle==-3) {
+          TRandom *tRandom = new TRandom();
+          tRandom->SetSeed(0);
+          fRotationAngle = tRandom->Gaus(180,30);
+          while(fRotationAngle<90 || fRotationAngle>270){fRotationAngle = tRandom->Gaus(180,30);}
+          fRotationAngle = fRotationAngle * 3.14 / 180.;
+          delete tRandom;
+        }
+       fParticles[iTr].RotateXY(fRotationAngle,vtxb);
+     }
+   }
+}
   //endb
 
   CleanPV();
@@ -1035,8 +1072,8 @@ bool StKFParticleInterface::ProcessEvent(StMuDst* muDst, vector<KFMCTrack>& mcTr
     mcTrackKF.SetNMCPixelPoints(mumcTrack->No_ist_hit() + mumcTrack->No_ssd_hit() + mumcTrack->No_pix_hit());
     // cout << mcTrackKF.PDG()<< " "<<mumcTrack->GePid()<<endl;
     if (mumcTrack->GePid()==63053 || mumcTrack->GePid()==62053) mcTrackKF.SetPDG(103004);
-    if (mumcTrack->GePid()==45) mcTrackKF.SetPDG(1000010020);
-    if (mumcTrack->GePid()==18 || mumcTrack->GePid()==95 || mumcTrack->GePid()==10018) mcTrackKF.SetPDG(3122);
+    if (mumcTrack->GePid()==45 || mumcTrack->GePid()==51045 ) mcTrackKF.SetPDG(1000010020);
+    if (mumcTrack->GePid()==18 || mumcTrack->GePid()==95  || mumcTrack->GePid()==11018) mcTrackKF.SetPDG(3122);
   }
 
   int countrefmult=0; 

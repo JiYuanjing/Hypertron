@@ -1196,11 +1196,11 @@ Int_t StKFParticleAnalysisMaker::Make()
 
   if(fRunCentralityAnalysis)
   {
-      centralityBin = Centrality(countrefmult);
+      centralityBin = Centrality(FXTMult2);
       cent9 = centralityBin;  
       // reweight = mPileupTool->get_centralityWeight();
       if (centralityBin<0) isGoodEvent= false;
-      else reweight = FitWeight(countrefmult);
+      else reweight = FitWeight(FXTMult2);
   }
 
   if(fFlowAnalysis)
@@ -2235,7 +2235,7 @@ Int_t StKFParticleAnalysisMaker::Make()
                 //decay from the same particle
                 for (Int_t j = 0; j < fMuDst->numberOfMcTracks(); j++) {
                   StMuMcTrack* mcTrack = fMuDst->MCtrack(j);
-                  if (mcTrack->GePid()==62053 && mcTrack->IdVxEnd() == mcDeu->IdVx())  
+                  if ((mcTrack->GePid()==62053 || mcTrack->GePid()==63053) && mcTrack->IdVxEnd() == mcDeu->IdVx())  
                     // if ( mcTrack->IdVxEnd() == mcDeu->IdVx()) 
                   { 
                     // cout << "check if find the real mother: "<<mcTrack->GePid()<<" pion: "<<mcPion->GePid()<<" mcProton: "<<mcProton->GePid()<<endl; 
@@ -2245,19 +2245,19 @@ Int_t StKFParticleAnalysisMaker::Make()
                 }
                 if (idH3L>=0) bismc=1;
               } //end of phase space  
-              else if ( mcDeu->GePid()==45 )  { //quasi-Lambda decay, search Lambda
+              else if ( mcDeu->GePid()==45  || mcDeu->GePid()==51045)  { //quasi-Lambda decay, search Lambda
                 // cout <<"check quasi ";
                 for (Int_t j = 0; j < fMuDst->numberOfMcTracks(); j++) 
                 {
                   StMuMcTrack* tmpTrack = fMuDst->MCtrack(j);
-                  if ( tmpTrack->IdVxEnd() == mcDeu->IdVx() && tmpTrack->GePid()==63053)
+                  if ( tmpTrack->IdVxEnd() == mcDeu->IdVx() && ( tmpTrack->GePid()==62053 || tmpTrack->GePid()==63053))
                   { 
                     // cout << "check if find the real mother: "<<
                     // tmpTrack->GePid()<<" pion: "<<mcPion->GePid()<<
                     // " mcProton: "<<mcProton->GePid()<<" "<<mcDeu->GePid()<<endl; 
                     idH3L = j;
                   }
-                  else if ( tmpTrack->IdVxEnd() == mcProton->IdVx() && tmpTrack->IdVx()==mcDeu->IdVx() && tmpTrack->GePid()==95)
+                  else if ( tmpTrack->IdVxEnd() == mcProton->IdVx() && tmpTrack->IdVx()==mcDeu->IdVx() && (tmpTrack->GePid()==95 || tmpTrack->GePid()==11018 || tmpTrack->GePid()==18))
                   { 
                     // cout << "check if find the real Lambda: "<<tmpTrack->GePid()<<endl; 
                     idLb = j;

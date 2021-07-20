@@ -93,8 +93,10 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   if (mode==0) treename = "htriton3_tree";
   TChain htriton3_tree(treename.Data()); 
 
-  TH1F* hrefmult  = new TH1F("hrefmult_tot", "refmult; hrefmult; N_{evt}", 600,0,600);
-  hrefmult->SetDirectory(0);
+  // TH1F* hrefmult  = new TH1F("hrefmult_tot", "refmult; hrefmult; N_{evt}", 600,0,600);
+  TH1F* hcent  = new TH1F("hcent", "cent; centrality; N_{evt}", 9,-0.5,8.5);
+  TH1F* hcentwt  = new TH1F("hcentwt", "centwt; centrality; N_{evt}", 9,-0.5,8.5);
+  // hrefmult->SetDirectory(0);
 
   if (mInputlist.Contains(".root"))
   {
@@ -120,8 +122,10 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       else {
         if(nfile%1==0) cout<<"read in "<<nfile<<"th file: "<< tmp <<endl;
         htriton3_tree.Add(tmp);
-        TH1F* htmp = (TH1F*)ftmp->Get("hrefmult");
-        hrefmult->Add(htmp);
+        TH1F* htmp = (TH1F*)ftmp->Get("hCent");
+        TH1F* htmp2 = (TH1F*)ftmp->Get("hCentWt");
+        hcent->Add(htmp);
+        hcentwt->Add(htmp2);
         nfile++;
         ftmp->Close();
       }
@@ -274,6 +278,9 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3Lmass->Sumw2();
   TH3F* hH3LMassPtY= new TH3F("hH3LMassPtY","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 60, -1.5,0);
   hH3LMassPtY->Sumw2();
+  TH3F* hH3LMassPtY_5_40= new TH3F("hH3LMassPtY_5_40","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 60, -1.5,0);
+  hH3LMassPtY_5_40->Sumw2();
+
   TH2F* hH3LptProtonPt = new TH2F("hH3LptProtonPt","hH3LptProtonPt; p_{T};", 100, 0, 5, 100, 0, 5);
   hH3LptProtonPt->Sumw2();
   TH2F* hH3LptPionPt = new TH2F("hH3LptPionPt","hH3LptPionPt; p_{T};", 100, 0, 5, 100, 0, 5);
@@ -360,6 +367,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     if (i%100000==0) cout <<"read "<<i<<" events!" << endl;
     if ( !(bismc == mcState)  ) continue;
     if (bisMix!=isMix) continue;
+    if (cent9<=1) continue; //remove 60-80%, weight is not correct
 
     double ptweight = 1; //reserved
     double rapweight = 1;
@@ -401,9 +409,9 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       }
     }
     /* cout << mcMotherPt <<" "<<mcweight<<" "<<ptweight<<" "<<rapweight<<endl; */
-    reweight=1; //centrality weight
+    gweight=reweight; //centrality weight
 
-    double weight = ptweight*rapweight*mcweight*reweight;
+    double weight = ptweight*rapweight*mcweight*gweight;
     if (mcState==0) weight = reweight; 
     double ppi_pt = sqrt(bpx*bpx+bpy*bpy); // lambda case 
     if (mode==0) ppi_pt= sqrt(bpionpx*bpionpx+bpionpy*bpionpy+bprotonpy*bprotonpy+bprotonpx*bprotonpx);
@@ -524,6 +532,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       {
         hptH3Lmass->Fill(H3LpT, bparticlemass, weight); 
         hH3LMassPtY->Fill(H3LpT, bparticlemass, H3L.Rapidity(), weight);
+        if (cent9<=7 && cent9 >=4 && fabs(p_d)<3 && fabs(p_p)<2  ) hH3LMassPtY_5_40->Fill(H3LpT, bparticlemass, H3L.Rapidity(), weight);
       }
       hH3LptProtonPt->Fill(H3LpT, p_pt , weight );
       hH3LptPionPt->Fill(H3LpT, pi_pt, weight);       
@@ -560,6 +569,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     hptppildlSig->Write();
     
     hH3LMassPtY->Write();
+    hH3LMassPtY_5_40->Write();
     hptH3Lmass->Write();
     hptH3L_dDca->Write();
     hptH3L_piDca->Write();
@@ -601,7 +611,9 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     hH3LptProtonPt->Write();
   }
 
-  hrefmult->Write();
+  // hrefmult->Write();
+  hcentwt->Write();
+  hcent->Write();
 
   fout->Close();
   // htriton3_tree->Close();
