@@ -4,13 +4,19 @@
 # input="ana_tree.root"
 # input="data_test3.root"
 # input="dataME_test2.root"
-input="test.list"
+# input="test.list"
+# input="quasiMC.root"
 
 #void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1, int const isMix=0)
-root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data.root\",0,0\)
-root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME.root\",0,1\)
-root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_SE.root\",0,2\)
-
+# input="quasiMC.root"
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_MC.root\",1,0\)
+# input="phaseMC.root"
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_phase_MC.root\",1,0\)
+input="LambdaMC.root"
+root -b -q readtree.C\(\"$input\",0,\"fout_Lambda_MC_Cuts.root\",-20,0\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data.root\",0,0\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME.root\",0,1\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_SE.root\",0,2\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_check.root\",0,0\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_ME_check.root\",0,1\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data_SE_check.root\",0,2\)

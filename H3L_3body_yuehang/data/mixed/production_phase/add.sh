@@ -5,7 +5,7 @@
 ############################
 
 tmp="tmplist.txt"
-out="../fout_H3L_ME_Jul22_part.root"
+out="../phaseMC.root"
 N=`ls *.root | wc -l`
 rm -rf ${tmp}
 ls *.root > ${tmp}

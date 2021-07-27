@@ -181,4 +181,12 @@ void drawSTAR(double x,double y)
   lat.SetTextColor(kRed);
   lat.DrawLatexNDC ( x, y, "STAR Preliminary");
 }
+void drawBox(double x1,double y1, double x2, double y2, int color, int style, int mode=0, double trans=1)
+{
+  TBox* box = new TBox(x1,y1,x2,y2);
+  box->SetFillStyle(style);
+  if (mode==0) box->SetFillColor(color);
+  else if (mode==1) box->SetFillColorAlpha(color, trans);
+  box->Draw();
+}
 #endif // __SPHENIXSTYLE_H

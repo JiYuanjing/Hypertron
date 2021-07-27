@@ -102,14 +102,9 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   {
     htriton3_tree.Add(mInputlist.Data());
     TFile *ftmp = new TFile(mInputlist.Data());
-    // TH1F* htmp = (TH1F*)ftmp->Get("hrefmult");
-    // hrefmult->Add(htmp);
+    TH1F* htmp = (TH1F*)ftmp->Get("hrefmult");
+    hrefmult->Add(htmp);
     // ftmp->Close();
-    TH1F* htmp = (TH1F*)ftmp->Get("hCent");
-    TH1F* htmp2 = (TH1F*)ftmp->Get("hCentWt");
-    hcent->Add(htmp);
-    hcentwt->Add(htmp2);
-
   }
   else
   {
@@ -231,51 +226,51 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     htriton3_tree.SetBranchAddress("dca_pi",&dca_pion);
   }
 
-  TH1F* hcentwt = new TH1F("hcharge","hcharge",2,-1.5,1.5);
   ////Background QA histrograms////////
   //(ppi) QA
-  // TH2F* hptppimass = new TH2F("hptppimass","hptppimass;p_{T};mass",100,0,10,400,1.05,1.15);
-  // hptppimass->Sumw2();
-  // TH2F* hptppichi2prim= new TH2F("hptppichi2prim","hptppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,10,50,0,40);
-  // hptppichi2prim->Sumw2();
-  // TH2F* hptppil= new TH2F("hptppil","hptppil;p_{T};(p#pi) l",100,0,10,50,0,40);
-  // hptppil->Sumw2();
-  // TH2F* hptppildl= new TH2F("hptppildl","hptppildl;p_{T};(p#pi) ldl",100,0,10,50,0,25);
-  // hptppildl->Sumw2();
-  // TH2F* hptppichi2ndf= new TH2F("hptppichi2ndf","hptppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
-  // hptppichi2ndf->Sumw2();
-  // TH2F* hptpichi2prim= new TH2F("hptpichi2prim","hptpichi2prim;p_{T};#pi #chi^{2}_{prim}",100,0,10,50,0,40);
-  // hptpichi2prim->Sumw2();
-  // TH2F* hptpchi2prim= new TH2F("hptpchi2prim","hptpchi2prim;p_{T};p #chi^{2}_{prim}",100,0,10,50,0,40);
-  // hptpchi2prim->Sumw2();
-  // TH2F* hptpidca = new TH2F("hptpidca","hptpidca;p_{T};DCA",100,0,10,100,0,15);
-  // hptpidca->Sumw2();
-  // TH2F* hptpdca = new TH2F("hptpdca","hptpdca;p_{T};DCA",100,0,10,100,0,10);
-  // hptpdca->Sumw2();
-  // TH2F* hptsumdca = new TH2F("hptsumdca","hptsumdca;p_{T};DCA",100,0,10,100,0,20);
-  // hptsumdca->Sumw2();
+  TH2F* hptppimass = new TH2F("hptppimass","hptppimass;p_{T};mass",100,0,10,400,1.05,1.15);
+  hptppimass->Sumw2();
 
-  // TH2F* hptppimassSB = new TH2F("hptppimassSB","hptppimass;p_{T};mass",100,0,10,400,1.05,1.15);
-  // hptppimassSB->Sumw2();
-  // TH2F* hptppichi2primSB= new TH2F("hptppichi2primSB","hptppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,10,50,0,40);
-  // hptppichi2primSB->Sumw2();
-  // TH2F* hptppilSB= new TH2F("hptppilSB","hptppil;p_{T};(p#pi) l",100,0,10,50,0,40);
-  // hptppilSB->Sumw2();
-  // TH2F* hptppildlSB= new TH2F("hptppildlSB","hptppildl;p_{T};(p#pi) ldl",100,0,10,50,0,25);
-  // hptppildlSB->Sumw2();
-  // TH2F* hptppichi2ndfSB= new TH2F("hptppichi2ndfSB","hptppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
-  // hptppichi2ndfSB->Sumw2();
+  TH2F* hptppichi2prim= new TH2F("hptppichi2prim","hptppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,10,50,0,40);
+  hptppichi2prim->Sumw2();
+  TH2F* hptppil= new TH2F("hptppil","hptppil;p_{T};(p#pi) l",100,0,10,50,0,40);
+  hptppil->Sumw2();
+  TH2F* hptppildl= new TH2F("hptppildl","hptppildl;p_{T};(p#pi) ldl",100,0,10,50,0,25);
+  hptppildl->Sumw2();
+  TH2F* hptppichi2ndf= new TH2F("hptppichi2ndf","hptppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
+  hptppichi2ndf->Sumw2();
+  TH2F* hptpichi2prim= new TH2F("hptpichi2prim","hptpichi2prim;p_{T};#pi #chi^{2}_{prim}",100,0,10,50,0,40);
+  hptpichi2prim->Sumw2();
+  TH2F* hptpchi2prim= new TH2F("hptpchi2prim","hptpchi2prim;p_{T};p #chi^{2}_{prim}",100,0,10,50,0,40);
+  hptpchi2prim->Sumw2();
+  TH2F* hptpidca = new TH2F("hptpidca","hptpidca;p_{T};DCA",100,0,10,100,0,15);
+  hptpidca->Sumw2();
+  TH2F* hptpdca = new TH2F("hptpdca","hptpdca;p_{T};DCA",100,0,10,100,0,10);
+  hptpdca->Sumw2();
+  TH2F* hptsumdca = new TH2F("hptsumdca","hptsumdca;p_{T};DCA",100,0,10,100,0,20);
+  hptsumdca->Sumw2();
 
-  // TH2F* hptppimassSig = new TH2F("hptppimassSig","hptppimass;p_{T};mass",100,0,10,400,1.05,1.15);
-  // hptppimassSig->Sumw2();
-  // TH2F* hptppichi2primSig= new TH2F("hptppichi2primSig","hptppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,10,50,0,40);
-  // hptppichi2primSig->Sumw2();
-  // TH2F* hptppilSig= new TH2F("hptppilSig","hptppil;p_{T};(p#pi) l",100,0,10,50,0,40);
-  // hptppilSig->Sumw2();
-  // TH2F* hptppildlSig= new TH2F("hptppildlSig","hptppildl;p_{T};(p#pi) ldl",100,0,10,50,0,25);
-  // hptppildlSig->Sumw2();
-  // TH2F* hptppichi2ndfSig= new TH2F("hptppichi2ndfSig","hptppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
-  // hptppichi2ndfSig->Sumw2();
+  TH2F* hptppimassSB = new TH2F("hptppimassSB","hptppimass;p_{T};mass",100,0,10,400,1.05,1.15);
+  hptppimassSB->Sumw2();
+  TH2F* hptppichi2primSB= new TH2F("hptppichi2primSB","hptppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,10,50,0,40);
+  hptppichi2primSB->Sumw2();
+  TH2F* hptppilSB= new TH2F("hptppilSB","hptppil;p_{T};(p#pi) l",100,0,10,50,0,40);
+  hptppilSB->Sumw2();
+  TH2F* hptppildlSB= new TH2F("hptppildlSB","hptppildl;p_{T};(p#pi) ldl",100,0,10,50,0,25);
+  hptppildlSB->Sumw2();
+  TH2F* hptppichi2ndfSB= new TH2F("hptppichi2ndfSB","hptppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
+  hptppichi2ndfSB->Sumw2();
+
+  TH2F* hptppimassSig = new TH2F("hptppimassSig","hptppimass;p_{T};mass",100,0,10,400,1.05,1.15);
+  hptppimassSig->Sumw2();
+  TH2F* hptppichi2primSig= new TH2F("hptppichi2primSig","hptppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,10,50,0,40);
+  hptppichi2primSig->Sumw2();
+  TH2F* hptppilSig= new TH2F("hptppilSig","hptppil;p_{T};(p#pi) l",100,0,10,50,0,40);
+  hptppilSig->Sumw2();
+  TH2F* hptppildlSig= new TH2F("hptppildlSig","hptppildl;p_{T};(p#pi) ldl",100,0,10,50,0,25);
+  hptppildlSig->Sumw2();
+  TH2F* hptppichi2ndfSig= new TH2F("hptppichi2ndfSig","hptppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
+  hptppichi2ndfSig->Sumw2();
 
   /* TH2F* hPhase = new TH2F("hPhase","hPhase;y;pt",100,-1,1,250,0,5); */
 
@@ -286,13 +281,13 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   TH3F* hH3LMassPtY_5_40= new TH3F("hH3LMassPtY_5_40","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 60, -1.5,0);
   hH3LMassPtY_5_40->Sumw2();
 
-  TH2F* hH3LptProtonPt = new TH2F("hH3LptProtonPt","hH3LptProtonPt; p_{T};", 100, 0, 5, 80, 0, 4);
+  TH2F* hH3LptProtonPt = new TH2F("hH3LptProtonPt","hH3LptProtonPt; p_{T};", 100, 0, 5, 100, 0, 5);
   hH3LptProtonPt->Sumw2();
-  TH2F* hH3LptPionPt = new TH2F("hH3LptPionPt","hH3LptPionPt; p_{T};", 100, 0, 5, 60, 0, 3);
+  TH2F* hH3LptPionPt = new TH2F("hH3LptPionPt","hH3LptPionPt; p_{T};", 100, 0, 5, 100, 0, 5);
   hH3LptPionPt->Sumw2();
 
   //topological variable for H3L
-  TH2F* hptH3L_l= new TH2F("hptH3L_l","hptH3L_l;p_{T};l",100,0,5,500,0,100);
+  TH2F* hptH3L_l= new TH2F("hptH3L_l","hptH3L_l;p_{T};l",100,0,5,100,0,40);
   hptH3L_l->Sumw2();
   TH2F* hptH3L_ldl= new TH2F("hptH3L_ldl","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
   hptH3L_ldl->Sumw2();
@@ -302,21 +297,20 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_pichi2prim->Sumw2();
   TH2F* hptH3L_pchi2prim= new TH2F("hptH3L_pchi2prim","hptH3L_pchi2pri;p_{T};p chi2prim",100,0,5,100,0,20);
   hptH3L_pchi2prim->Sumw2();
-  TH2F* hptH3L_chi2topo= new TH2F("hptH3L_chi2topo","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
+  TH2F* hptH3L_chi2topo= new TH2F("hptH3L_chi2topo","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,20);
   hptH3L_chi2topo->Sumw2();
-  TH2F* hptH3L_chi2ndf= new TH2F("hptH3L_chi2ndf","hptH3L_chi2topo;p_{T};chi2ndf",100,0,5,120,0,15);
+  TH2F* hptH3L_chi2ndf= new TH2F("hptH3L_chi2ndf","hptH3L_chi2topo;p_{T};chi2ndf",100,0,5,100,0,20);
   hptH3L_chi2ndf->Sumw2();
-  TH2F* hptH3L_dDca= new TH2F("hptH3L_dDca","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
+  TH2F* hptH3L_dDca= new TH2F("hptH3L_dDca","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,10);
   hptH3L_dDca->Sumw2();
   TH2F* hptH3L_piDca= new TH2F("hptH3L_piDca","hptH3L_piDca;p_{T};piDca",100,0,5,100,0,20);
   hptH3L_piDca->Sumw2();
-  TH2F* hptH3L_pDca= new TH2F("hptH3L_pDca","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,10);
+  TH2F* hptH3L_pDca= new TH2F("hptH3L_pDca","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,20);
   hptH3L_pDca->Sumw2();
-  TH2F* hptH3L_dpDca= new TH2F("hptH3L_dpDca","hptH3L_dpDca;p_{T};dpDca",100,0,5,80,0,4);
+  TH2F* hptH3L_dpDca= new TH2F("hptH3L_dpDca","hptH3L_dpDca;p_{T};dpDca",100,0,5,100,0,10);
   hptH3L_dpDca->Sumw2();
-
   //signal region
-  TH2F* hptH3L_lSig= new TH2F("hptH3L_lSig","hptH3L_l;p_{T};l",100,0,5,500,0,100);
+  TH2F* hptH3L_lSig= new TH2F("hptH3L_lSig","hptH3L_l;p_{T};l",100,0,5,100,0,40);
   hptH3L_lSig->Sumw2();
   TH2F* hptH3L_ldlSig = new TH2F("hptH3L_ldlSig","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
   hptH3L_ldlSig->Sumw2();
@@ -326,111 +320,41 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_pichi2primSig->Sumw2();
   TH2F* hptH3L_pchi2primSig= new TH2F("hptH3L_pchi2primSig","hptH3L_pchi2pri;p_{T};p chi2prim",100,0,5,100,0,20);
   hptH3L_pchi2primSig->Sumw2();
-  TH2F* hptH3L_chi2topoSig= new TH2F("hptH3L_chi2topoSig","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
+  TH2F* hptH3L_chi2topoSig= new TH2F("hptH3L_chi2topoSig","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,20);
   hptH3L_chi2topoSig->Sumw2();
-  TH2F* hptH3L_chi2ndfSig= new TH2F("hptH3L_chi2ndfSig","hptH3L_chi2ndf;p_{T};chi2ndf",100,0,5,120,0,15);
+  TH2F* hptH3L_chi2ndfSig= new TH2F("hptH3L_chi2ndfSig","hptH3L_chi2topo;p_{T};chi2ndf",100,0,5,100,0,20);
   hptH3L_chi2ndfSig->Sumw2();
-  TH2F* hptH3L_dDcaSig= new TH2F("hptH3L_dDcaSig","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
+  TH2F* hptH3L_dDcaSig= new TH2F("hptH3L_dDcaSig","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,10);
   hptH3L_dDcaSig->Sumw2();
   TH2F* hptH3L_piDcaSig= new TH2F("hptH3L_piDcaSig","hptH3L_piDca;p_{T};piDca",100,0,5,100,0,20);
   hptH3L_piDcaSig->Sumw2();
-  TH2F* hptH3L_pDcaSig = new TH2F("hptH3L_pDcaSig","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,10);
+  TH2F* hptH3L_pDcaSig = new TH2F("hptH3L_pDcaSig","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,20);
   hptH3L_pDcaSig->Sumw2();
-  TH2F* hptH3L_dpDcaSig = new TH2F("hptH3L_dpDcaSig","hptH3L_dpDca;p_{T};dpDca",100,0,5,80,0,4);
+  TH2F* hptH3L_dpDcaSig = new TH2F("hptH3L_dpDcaSig","hptH3L_dpDca;p_{T};dpDca",100,0,5,100,0,10);
   hptH3L_dpDcaSig->Sumw2();
   //SB region
-  TH2F* hptH3L_lSBL= new TH2F("hptH3L_lSBL","hptH3L_l;p_{T};l",100,0,5,500,0,100);
-  hptH3L_lSBL->Sumw2();
-  TH2F* hptH3L_ldlSBL = new TH2F("hptH3L_ldlSBL","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
-  hptH3L_ldlSBL->Sumw2();
-  TH2F* hptH3L_dchi2primSBL = new TH2F("hptH3L_dchi2primSBL","hptH3L_dchi2pri;p_{T};d chi2prim",100,0,5,100,0,20);
-  hptH3L_dchi2primSBL->Sumw2();
-  TH2F* hptH3L_pichi2primSBL = new TH2F("hptH3L_pichi2primSBL","hptH3L_pichi2pri;p_{T};pi chi2prim",100,0,5,100,0,20);
-  hptH3L_pichi2primSBL->Sumw2();
-  TH2F* hptH3L_pchi2primSBL= new TH2F("hptH3L_pchi2primSBL","hptH3L_pchi2pri;p_{T};p chi2prim",100,0,5,100,0,20);
-  hptH3L_pchi2primSBL->Sumw2();
-  TH2F* hptH3L_chi2topoSBL= new TH2F("hptH3L_chi2topoSBL","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
-  hptH3L_chi2topoSBL->Sumw2();
-  TH2F* hptH3L_chi2ndfSBL= new TH2F("hptH3L_chi2ndfSBL","hptH3L_chi2ndfSBL;p_{T};chi2ndf",100,0,5,120,0,15);
-  hptH3L_chi2ndfSBL->Sumw2();
-  TH2F* hptH3L_dDcaSBL= new TH2F("hptH3L_dDcaSBL","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
-  hptH3L_dDcaSBL->Sumw2();
-  TH2F* hptH3L_piDcaSBL= new TH2F("hptH3L_piDcaSBL","hptH3L_piDca;p_{T};piDca",100,0,5,100,0,20);
-  hptH3L_piDcaSBL->Sumw2();
-  TH2F* hptH3L_pDcaSBL = new TH2F("hptH3L_pDcaSBL","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,10);
-  hptH3L_pDcaSBL->Sumw2();
-  TH2F* hptH3L_dpDcaSBL = new TH2F("hptH3L_dpDcaSBL","hptH3L_dpDca;p_{T};dpDca",100,0,5,80,0,4);
-  hptH3L_dpDcaSBL->Sumw2();
-
-  TH2F* hptH3L_lSBR= new TH2F("hptH3L_lSBR","hptH3L_l;p_{T};l",100,0,5,500,0,100);
-  hptH3L_lSBR->Sumw2();
-  TH2F* hptH3L_ldlSBR = new TH2F("hptH3L_ldlSBR","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
-  hptH3L_ldlSBR->Sumw2();
-  TH2F* hptH3L_dchi2primSBR = new TH2F("hptH3L_dchi2primSBR","hptH3L_dchi2pri;p_{T};d chi2prim",100,0,5,100,0,20);
-  hptH3L_dchi2primSBR->Sumw2();
-  TH2F* hptH3L_pichi2primSBR = new TH2F("hptH3L_pichi2primSBR","hptH3L_pichi2pri;p_{T};pi chi2prim",100,0,5,100,0,20);
-  hptH3L_pichi2primSBR->Sumw2();
-  TH2F* hptH3L_pchi2primSBR= new TH2F("hptH3L_pchi2primSBR","hptH3L_pchi2pri;p_{T};p chi2prim",100,0,5,100,0,20);
-  hptH3L_pchi2primSBR->Sumw2();
-  TH2F* hptH3L_chi2topoSBR= new TH2F("hptH3L_chi2topoSBR","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
-  hptH3L_chi2topoSBR->Sumw2();
-  TH2F* hptH3L_chi2ndfSBR= new TH2F("hptH3L_chi2ndfSBR","hptH3L_chi2ndfSBR;p_{T};chi2ndf",100,0,5,120,0,15);
-  hptH3L_chi2ndfSBR->Sumw2();
-  TH2F* hptH3L_dDcaSBR= new TH2F("hptH3L_dDcaSBR","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
-  hptH3L_dDcaSBR->Sumw2();
-  TH2F* hptH3L_piDcaSBR= new TH2F("hptH3L_piDcaSBR","hptH3L_piDca;p_{T};piDca",100,0,5,100,0,20);
-  hptH3L_piDcaSBR->Sumw2();
-  TH2F* hptH3L_pDcaSBR = new TH2F("hptH3L_pDcaSBR","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,10);
-  hptH3L_pDcaSBR->Sumw2();
-  TH2F* hptH3L_dpDcaSBR = new TH2F("hptH3L_dpDcaSBR","hptH3L_dpDca;p_{T};dpDca",100,0,5,80,0,4);
-  hptH3L_dpDcaSBR->Sumw2();
-
-
-  TH2F* hptH3L_ppimass = new TH2F("hptH3L_ppimass","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
-  hptppimass->Sumw2();
-  TH2F* hptH3L_ppichi2prim= new TH2F("hptH3L_ppichi2prim","hptH3L_ppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,5,50,0,40);
-  hptH3L_ppichi2prim->Sumw2();
-  TH2F* hptH3L_ppil= new TH2F("hptH3L_ppil","hptH3L_ppil;p_{T};(p#pi) l",100,0,5,50,0,40);
-  hptH3L_ppil->Sumw2();
-  TH2F* hptH3L_ppildl= new TH2F("hptH3L_ppildl","hptH3L_ppildl;p_{T};(p#pi) ldl",100,0,5,50,0,25);
-  hptH3L_ppildl->Sumw2();
-  TH2F* hptH3L_ppichi2ndf= new TH2F("hptH3L_ppichi2ndf","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
-  hptH3L_ppichi2ndf->Sumw2();
-
-  TH2F* hptH3L_ppimassSBL = new TH2F("hptH3L_ppimassSBL","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
-  hptH3L_ppimassSBL->Sumw2();
-  TH2F* hptH3L_ppichi2primSBL= new TH2F("hptH3L_ppichi2primSBL","hptH3L_ppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,5,50,0,40);
-  hptH3L_ppichi2primSBL->Sumw2();
-  TH2F* hptH3L_ppilSBL= new TH2F("hptH3L_ppilSBL","hptH3L_ppil;p_{T};(p#pi) l",100,0,5,50,0,40);
-  hptH3L_ppilSBL->Sumw2();
-  TH2F* hptH3L_ppildlSBL= new TH2F("hptH3L_ppildlSBL","hptH3L_ppildl;p_{T};(p#pi) ldl",100,0,5,50,0,25);
-  hptH3L_ppildlSBL->Sumw2();
-  TH2F* hptH3L_ppichi2ndfSBL= new TH2F("hptH3L_ppichi2ndfSBL","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
-  hptH3L_ppichi2ndfSBL->Sumw2();
-
-  TH2F* hptH3L_ppimassSBR = new TH2F("hptH3L_ppimassSBR","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
-  hptH3L_ppimassSBR->Sumw2();
-  TH2F* hptH3L_ppichi2primSBR= new TH2F("hptH3L_ppichi2primSBR","hptH3L_ppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,5,50,0,40);
-  hptH3L_ppichi2primSBR->Sumw2();
-  TH2F* hptH3L_ppilSBR= new TH2F("hptH3L_ppilSBR","hptH3L_ppil;p_{T};(p#pi) l",100,0,5,50,0,40);
-  hptH3L_ppilSBR->Sumw2();
-  TH2F* hptH3L_ppildlSBR= new TH2F("hptH3L_ppildlSBR","hptH3L_ppildl;p_{T};(p#pi) ldl",100,0,5,50,0,25);
-  hptH3L_ppildlSBR->Sumw2();
-  TH2F* hptH3L_ppichi2ndfSBR= new TH2F("hptH3L_ppichi2ndfSBR","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
-  hptH3L_ppichi2ndfSBR->Sumw2();
-
-  TH2F* hptH3L_ppimassSig = new TH2F("hptH3L_ppimassSig","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
-  hptH3L_ppimassSig->Sumw2();
-  TH2F* hptH3L_ppichi2primSig= new TH2F("hptH3L_ppichi2primSig","hptH3L_ppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,5,50,0,40);
-  hptH3L_ppichi2primSig->Sumw2();
-  TH2F* hptH3L_ppilSig= new TH2F("hptH3L_ppilSig","hptH3L_ppil;p_{T};(p#pi) l",100,0,5,50,0,40);
-  hptH3L_ppilSig->Sumw2();
-  TH2F* hptH3L_ppildlSig= new TH2F("hptH3L_ppildlSig","hptH3L_ppildl;p_{T};(p#pi) ldl",100,0,5,50,0,25);
-  hptH3L_ppildlSig->Sumw2();
-  TH2F* hptH3L_ppichi2ndfSig= new TH2F("hptH3L_ppichi2ndfSig","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
-  hptH3L_ppichi2ndfSig->Sumw2();
-
-
+  TH2F* hptH3L_lSB= new TH2F("hptH3L_lSB","hptH3L_l;p_{T};l",100,0,5,100,0,40);
+  hptH3L_lSB->Sumw2();
+  TH2F* hptH3L_ldlSB = new TH2F("hptH3L_ldlSB","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
+  hptH3L_ldlSB->Sumw2();
+  TH2F* hptH3L_dchi2primSB = new TH2F("hptH3L_dchi2primSB","hptH3L_dchi2pri;p_{T};d chi2prim",100,0,5,100,0,20);
+  hptH3L_dchi2primSB->Sumw2();
+  TH2F* hptH3L_pichi2primSB = new TH2F("hptH3L_pichi2primSB","hptH3L_pichi2pri;p_{T};pi chi2prim",100,0,5,100,0,20);
+  hptH3L_pichi2primSB->Sumw2();
+  TH2F* hptH3L_pchi2primSB= new TH2F("hptH3L_pchi2primSB","hptH3L_pchi2pri;p_{T};p chi2prim",100,0,5,100,0,20);
+  hptH3L_pchi2primSB->Sumw2();
+  TH2F* hptH3L_chi2topoSB= new TH2F("hptH3L_chi2topoSB","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,20);
+  hptH3L_chi2topoSB->Sumw2();
+  TH2F* hptH3L_chi2ndfSB= new TH2F("hptH3L_chi2ndfSB","hptH3L_chi2topo;p_{T};chi2ndf",100,0,5,100,0,20);
+  hptH3L_chi2ndfSB->Sumw2();
+  TH2F* hptH3L_dDcaSB= new TH2F("hptH3L_dDcaSB","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,10);
+  hptH3L_dDcaSB->Sumw2();
+  TH2F* hptH3L_piDcaSB= new TH2F("hptH3L_piDcaSB","hptH3L_piDca;p_{T};piDca",100,0,5,100,0,20);
+  hptH3L_piDcaSB->Sumw2();
+  TH2F* hptH3L_pDcaSB = new TH2F("hptH3L_pDcaSB","hptH3L_pDca;p_{T};pDca",100,0,5,100,0,20);
+  hptH3L_pDcaSB->Sumw2();
+  TH2F* hptH3L_dpDcaSB = new TH2F("hptH3L_dpDcaSB","hptH3L_dpDca;p_{T};dpDca",100,0,5,100,0,10);
+  hptH3L_dpDcaSB->Sumw2();
 
   ////////////////////////////////////////////////////////////////
 
@@ -497,7 +421,6 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       if (bparticlemass<2.95 || bparticlemass > 3.05) continue;
       if (mass_01>1.15 || mass_01< 1.05) continue;
     }
-    hcharge->Fill(bparticleid>0?1:-1);
     if (bparticleid<0) continue; //currently only look at particle
 
     //compare H3L->ppi and Lambda->ppi
@@ -533,15 +456,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       double pi_pt = sqrt(bpionpx*bpionpx+bpionpy*bpionpy);
 
       /* weight=1; */
-      // bool passTopoCuts=1;
-      // bool Topo_l =        1;
-      // bool Topo_ldl =      1;
-      // bool Topo_chi2topo = 1;
-      // bool Topo_chi2ndf =  1;
-      // bool Topo_chi2d=     1;
-      // bool Topo_chi2pi =   1;
-      // bool Topo_chi2p =    1;
-
+      /* bool passTopoCuts=1; */
       bool passTopoCuts =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && 
                            fabs(p_d)<3 && fabs(p_p)<2 &&  
                            ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5;
@@ -613,32 +528,29 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
           hH3LMassPtY_5_40->Fill(H3LpT, bparticlemass, H3L.Rapidity(), weight);
         if (bparticlemass<2.995  && bparticlemass >2.989) 
         {
-          // hptppimassSig->Fill( ppi_pt, mass_01, weight);
-          // // hptpdcaSig->Fill( ppi_pt,dca_proton, weight);
-          // // hptpidcaSig->Fill( ppi_pt,dca_pion, weight);
-          // // hptsumdcaSig->Fill( ppi_pt,dca_pion+dca_proton, weight);
-          // // hptpchi2primSig->Fill( ppi_pt,chi2primary_proton, weight);
-          // // hptpichi2primSig->Fill( ppi_pt,chi2primary_pi, weight);
-          // hptppichi2ndfSig->Fill( ppi_pt, v_01_chi2ndf, weight);
-          // hptppichi2primSig->Fill( ppi_pt, v_01_chi2primary, weight);
-          // hptppilSig->Fill( ppi_pt, v_lambda_l_0, weight);
-          // hptppildlSig->Fill( ppi_pt, v_lambda_ldl_0, weight);
+          hptppimassSig->Fill( ppi_pt, mass_01, weight);
+          // hptpdcaSig->Fill( ppi_pt,dca_proton, weight);
+          // hptpidcaSig->Fill( ppi_pt,dca_pion, weight);
+          // hptsumdcaSig->Fill( ppi_pt,dca_pion+dca_proton, weight);
+          // hptpchi2primSig->Fill( ppi_pt,chi2primary_proton, weight);
+          // hptpichi2primSig->Fill( ppi_pt,chi2primary_pi, weight);
+          hptppichi2ndfSig->Fill( ppi_pt, v_01_chi2ndf, weight);
+          hptppichi2primSig->Fill( ppi_pt, v_01_chi2primary, weight);
+          hptppilSig->Fill( ppi_pt, v_lambda_l_0, weight);
+          hptppildlSig->Fill( ppi_pt, v_lambda_ldl_0, weight);
         }
-        if ( ( bparticlemass<3.02 && bparticlemass > 3. ))
+        if ((bparticlemass<2.98 && bparticlemass>2.97 ) || ( bparticlemass<3.02 && bparticlemass > 3. ))
         {
-          // hptppimassSB->Fill( ppi_pt, mass_01, weight);
-          // // hptpdcaSB->Fill( ppi_pt,dca_proton, weight);
-          // // hptpidcaSB->Fill( ppi_pt,dca_pion, weight);
-          // // hptsumdcaSB->Fill( ppi_pt,dca_pion+dca_proton, weight);
-          // // hptpchi2primSB->Fill( ppi_pt,chi2primary_proton, weight);
-          // // hptpichi2primSB->Fill( ppi_pt,chi2primary_pi, weight);
-          // hptppichi2ndfSB->Fill( ppi_pt, v_01_chi2ndf, weight);
-          // hptppichi2primSB->Fill( ppi_pt, v_01_chi2primary, weight);
-          // hptppilSB->Fill( ppi_pt, v_lambda_l_0, weight);
-          // hptppildlSB->Fill( ppi_pt, v_lambda_ldl_0, weight);
-        }
-        else if ((bparticlemass<2.98 && bparticlemass>2.97 ) )
-        {
+          hptppimassSB->Fill( ppi_pt, mass_01, weight);
+          // hptpdcaSB->Fill( ppi_pt,dca_proton, weight);
+          // hptpidcaSB->Fill( ppi_pt,dca_pion, weight);
+          // hptsumdcaSB->Fill( ppi_pt,dca_pion+dca_proton, weight);
+          // hptpchi2primSB->Fill( ppi_pt,chi2primary_proton, weight);
+          // hptpichi2primSB->Fill( ppi_pt,chi2primary_pi, weight);
+          hptppichi2ndfSB->Fill( ppi_pt, v_01_chi2ndf, weight);
+          hptppichi2primSB->Fill( ppi_pt, v_01_chi2primary, weight);
+          hptppilSB->Fill( ppi_pt, v_lambda_l_0, weight);
+          hptppildlSB->Fill( ppi_pt, v_lambda_ldl_0, weight);
         }
         hH3LptProtonPt->Fill(H3LpT, p_pt , weight );
         hH3LptPionPt->Fill(H3LpT, pi_pt, weight);       
@@ -649,36 +561,31 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
 
   TFile* fout = new TFile(outfile.Data(),"recreate");
 
-  ///////////////////
-  // hptppimass->Write(); 
-  // hptppichi2ndf->Write();
-  // hptpichi2prim->Write();
-  // hptpchi2prim->Write();
-  // hptppichi2prim->Write();
-  // hptppil->Write();
-  // hptppildl->Write();
-  // hptpidca->Write();
-  // hptpdca->Write();
-  // hptsumdca->Write();
-  // //////////////////
+  hptppimass->Write(); 
+  hptppichi2ndf->Write();
+  hptpichi2prim->Write();
+  hptpchi2prim->Write();
+  hptppichi2prim->Write();
+  hptppil->Write();
+  hptppildl->Write();
+  hptpidca->Write();
+  hptpdca->Write();
+  hptsumdca->Write();
   /* hPhase->Write(); */
-  hcharge->Write();
 
   if (mode==0)
   {
-    //////////////////////
-    // hptppimassSB->Write(); 
-    // hptppichi2ndfSB->Write();
-    // hptppichi2primSB->Write();
-    // hptppilSB->Write();
-    // hptppildlSB->Write();
-    //
-    // hptppimassSig->Write(); 
-    // hptppichi2ndfSig->Write();
-    // hptppichi2primSig->Write();
-    // hptppilSig->Write();
-    // hptppildlSig->Write();
-    // //////////////
+    hptppimassSB->Write(); 
+    hptppichi2ndfSB->Write();
+    hptppichi2primSB->Write();
+    hptppilSB->Write();
+    hptppildlSB->Write();
+
+    hptppimassSig->Write(); 
+    hptppichi2ndfSig->Write();
+    hptppichi2primSig->Write();
+    hptppilSig->Write();
+    hptppildlSig->Write();
     
     hH3LMassPtY->Write();
     hH3LMassPtY_5_40->Write();

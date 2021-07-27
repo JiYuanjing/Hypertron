@@ -5,7 +5,7 @@
 ############################
 
 tmp="tmplist.txt"
-out="../fout_H3L_data_large.root"
+out="../fout_H3L_data_KF_Jul22_part.root"
 N=`ls *.root | wc -l`
 rm -rf ${tmp}
 ls *.root > ${tmp}

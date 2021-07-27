@@ -1,0 +1,153 @@
+std::vector<int> StKFParticleInterface::GetPID(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId)
+{
+
+	/*
+		 vector<int> ToFPDG;
+		 if(isTofm2)
+		 ToFPDG = GetTofPID(m2, p, q, trackId);
+		 */  
+	/* 
+		 vector<int> dEdXPDG;
+		 float nSigmaCut = 3.f; //TODO
+
+
+
+		 bool checkKTof = false;
+		 if(fCleanKaonsWitTof)
+		 checkKTof = (p > 0.5) && (p < 2.);
+		 bool checkKHasTof = 0;
+		 for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+		 if(abs(ToFPDG[iTofPDG]) == 321)
+		 checkKHasTof = 1;
+
+		 if(dEdXPull[0] < nSigmaCut)                                           dEdXPDG.push_back(211*q);  
+		 if(dEdXPull[1] < 2.f && ((checkKTof && checkKHasTof) || !checkKTof) ) dEdXPDG.push_back(321*q);
+		 if(dEdXPull[2] < nSigmaCut)                                           dEdXPDG.push_back(2212*q); 
+
+		 vector<int> totalPDG;
+		 if(!isTofm2)
+		 totalPDG = dEdXPDG;
+		 else
+		 {
+		 for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+		 for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+		 if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+		 totalPDG.push_back(ToFPDG[iTofPDG]);        
+		 }
+		 */
+
+	//removing tof information
+	vector<int> ToFPDG;
+	//  if(isTofm2)
+	//    ToFPDG = GetTofPID(m2, p, q, trackId);
+	isTofm2 = false;
+
+	//b
+	fTrackdEdX[trackId] = dEdX;
+	//endb
+
+	for(int iPdg=0; iPdg<3; iPdg++)
+		fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
+
+	vector<int> dEdXPDG;
+	float nSigmaCut = 3.f; //TODO
+
+	if(dEdXPull[0] < nSigmaCut) dEdXPDG.push_back(211*q);
+	if(dEdXPull[1] < nSigmaCut)	dEdXPDG.push_back(321*q);
+	//if(dEdXPull[2] < nSigmaCut) dEdXPDG.push_back(2212*q);
+
+	//for Proton and Deuteron PID, use uplimit and lowlimit at different momentum range
+	double ParfpMean[4]={4.22786,-0.916871,0.431019,0.0540937};
+	double Parfp_30sig_Up[4]={5.3431,-0.946281,0.398812,0.0406416}; //3. sig
+	double Parfp_20sig_Up[4]={4.87305,-0.947033,0.686713,-0.198145}; //2. sig
+	double Parfp_10sig_Up[4]={4.51168,-0.916304,0.673992,-0.196344}; //1. sig
+	double Parfp_30sig_Low[4]={3.07256,-0.879248,0.493871,0.0735467}; //3. sig
+	double ParfdMean[4]={3.07256,-0.879248,0.493871,0.0735467};
+	double Parfd_30sig_Up[4]={12.1708,-1.52211,0.277795,0.156806}; //3. sig
+	double Parfd_30sig_Low[4]={6.76373,-1.41505,0.358821,0.100492}; //3. sig
+	double Parfd_20sig_Low[4]={7.35189,-1.11283,-0.0521774,0.204001}; //2. sig
+	double Parfd_10sig_Low[4]={8.27391,-1.23297,0.1005,0.141251}; //1. sig
+
+
+	double lowpBound_30sig = Parfp_30sig_Low[0]*TMath::Power(p, Parfp_30sig_Low[1] + Parfp_30sig_Low[2]*log(p) + Parfp_30sig_Low[3]*log(p)*log(p));
+	double uppBound_30sig = Parfp_30sig_Up[0]*TMath::Power(p, Parfp_30sig_Up[1] + Parfp_30sig_Up[2]*log(p) + Parfp_30sig_Up[3]*log(p)*log(p));
+//	double lowpBound_20sig = Parfp_20sig_Low[0]*TMath::Power(p, Parfp_20sig_Low[1] + Parfp_20sig_Low[2]*log(p) + Parfp_20sig_Low[3]*log(p)*log(p));
+	double uppBound_20sig = Parfp_20sig_Up[0]*TMath::Power(p, Parfp_20sig_Up[1] + Parfp_20sig_Up[2]*log(p) + Parfp_20sig_Up[3]*log(p)*log(p));
+
+		double lowdBound_30sig = Parfd_30sig_Low[0]*TMath::Power(p, Parfd_30sig_Low[1] + Parfd_30sig_Low[2]*log(p) + Parfd_30sig_Low[3]*log(p)*log(p));
+		double updBound_30sig = Parfd_30sig_Up[0]*TMath::Power(p, Parfd_30sig_Up[1] + Parfd_30sig_Up[2]*log(p) + Parfd_30sig_Up[3]*log(p)*log(p));
+		double lowdBound_20sig = Parfd_20sig_Low[0]*TMath::Power(p, Parfd_20sig_Low[1] + Parfd_20sig_Low[2]*log(p) + Parfd_20sig_Low[3]*log(p)*log(p));
+//		double updBound_20sig = Parfd_20sig_Up[0]*TMath::Power(p, Parfd_20sig_Up[1] + Parfd_20sig_Up[2]*log(p) + Parfd_20sig_Up[3]*log(p)*log(p));
+
+	if(p<1.6){
+		if(dEdX>lowpBound_30sig && dEdX<uppBound_30sig) dEdXPDG.push_back(2212*q);
+	}
+	else if(p<3.){
+			if(dEdX>lowpBound_30sig && dEdX<uppBound_20sig) dEdXPDG.push_back(2212*q);
+		}
+
+	vector<int> totalPDG;
+	if(!isTofm2)
+		totalPDG = dEdXPDG;
+	else
+	{
+		for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+			for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+				if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+					totalPDG.push_back(ToFPDG[iTofPDG]);
+	}
+	//end removing tof   
+
+	{
+
+		if(p<1.6){
+			if(dEdX>lowdBound_30sig && dEdX<updBound_30sig) totalPDG.push_back(1000010020*q);
+		}
+		else if(p<3.0){
+			if(dEdX>lowdBound_20sig && dEdX<updBound_30sig) totalPDG.push_back(1000010020*q);
+			}
+
+		if(dEdXPull[4] < nSigmaCut && dEdXPull[3] > nSigmaCut) 
+			if( isTofm2 && (m2 > 5) ) //if( !isTofm2 || (isTofm2 && (m2 > 5)) )
+				totalPDG.push_back(1000010030*q);
+
+		// Add by Chenlu
+
+    if(p>0.4 && p<6.0)
+    {
+      double lowerHe3Parameters[4] = {22.2833,-1.05402,0.361398,0.00668723}; //3.0 sig
+      double upperHe3Parameters[4] = {32.0856,-1.22651,0.404085,0.0304582}; //2.5 sig
+      double upperHe4Parameters[4] = {52.3905,-1.42659,0.210966,0.121851}; //4.0 sig
+      double lowerHe4Parameters[4] = {30.2657,-1.21224,0.496028,-0.150661}; //3.0 sig added Chenlu 2020.11.10
+
+      double lowerHe3Bound = lowerHe3Parameters[0]*TMath::Power(p, lowerHe3Parameters[1] + lowerHe3Parameters[2]*log(p) + lowerHe3Parameters[3]*log(p)*log(p));
+      double upperHe3Bound = upperHe3Parameters[0]*TMath::Power(p, upperHe3Parameters[1] + upperHe3Parameters[2]*log(p) + upperHe3Parameters[3]*log(p)*log(p));
+      double upperHe4Bound = upperHe4Parameters[0]*TMath::Power(p, upperHe4Parameters[1] + upperHe4Parameters[2]*log(p) + upperHe4Parameters[3]*log(p)*log(p));
+      double lowerHe4Bound = lowerHe4Parameters[0]*TMath::Power(p, lowerHe4Parameters[1] + lowerHe4Parameters[2]*log(p) + lowerHe4Parameters[3]*log(p)*log(p));
+
+      if(dEdX > lowerHe3Bound && dEdX < upperHe3Bound && dEdX > 9.)
+        if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
+          totalPDG.push_back(1000020030*q);
+      if(dEdX > lowerHe4Bound && dEdX < upperHe4Bound && dEdX > 9.)
+        if( !isTofm2 || (isTofm2 && (m2>2.5) && (m2<6.) ) )
+          totalPDG.push_back(1000020040*q);
+    }
+    else if(p>=6.0 && dEdX > 9.)
+    {
+      if(dEdXPull[5] < nSigmaCut && dEdXPull[4] > nSigmaCut)
+        if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
+          totalPDG.push_back(1000020030*q);
+      if(dEdXPull[6] < nSigmaCut && dEdXPull[5] > nSigmaCut)
+        if( !isTofm2 || (isTofm2 && (m2>2.5) && (m2<6.) ) )
+          totalPDG.push_back(1000020040*q);
+    }
+
+	}
+
+	if(totalPDG.size() == 0)
+		totalPDG.push_back(-1);
+
+	return totalPDG;
+}
+
+
