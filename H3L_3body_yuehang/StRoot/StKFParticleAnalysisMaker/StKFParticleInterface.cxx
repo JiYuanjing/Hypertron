@@ -320,232 +320,517 @@ bool StKFParticleInterface::GetTrack(const StDcaGeometry& dcaG, KFPTrack& track,
   return true;
 }
 
-std::vector<int> StKFParticleInterface::GetTofPID(double m2, double p, int q, const int trackId)
-{
-  static const int order = 4;
-  static const double parMean[6][order+1] = { { 0.02283190,-0.01482910, 0.01883130,-0.01824250, 0.00409811  }, //pi+
-    { 0.24842500,-0.00699781,-0.00991387, 0.01327170,-0.00694824  }, //K+
-    { 0.863211  , 0.0264171 ,-0.0230833 , 0.00239637, 0.000262309 }, //p
-    { 0.0224095 ,-0.0123235 , 0.0145216 ,-0.0149944 , 0.00325952  }, //pi-
-    { 0.250696  ,-0.0151308 , 0.00437457, 0.00516669,-0.00529184  }, //K-
-    { 0.886912  ,-0.0298543 , 0.0449904 ,-0.0286879 , 0.00541963  }};//p-
-  static const double parSigma[6][order+1] = { { 0.0112498,-0.0400571, 0.0733615,-0.0316505, 0.00629469 }, //pi+
-    { 0.0154830,-0.0396312, 0.0719647,-0.0290683, 0.00637164 }, //K+
-    { 0.114465 ,-0.287213 , 0.356536 ,-0.169257 , 0.0299844  }, //p
-    { 0.0111682,-0.0394877, 0.0718342,-0.0302914, 0.00587317 }, //pi-
-    { 0.0157322,-0.0402606, 0.0716639,-0.0272101, 0.00564467 }, //K-
-    { 0.0899438,-0.211922 , 0.273122 ,-0.129597 , 0.0231844  }};//p-
-  double pMax = 2.;
-  double nSigmas[3];
-  for(int iHypothesys = 0; iHypothesys<3; iHypothesys++)
-  {
-    double x = p;
-    if(x>=pMax) x = pMax;
-
-    int iSet = iHypothesys;
-    if(q<0)
-      iSet += 3;
-    double mean = 0;
-    for(int iTerm=0; iTerm<=order; iTerm++)
-      mean += parMean[iSet][iTerm]*TMath::Power(x,iTerm);  
-
-    double sigma = 0;
-    for(int iTerm=0; iTerm<=order; iTerm++)
-      sigma += parSigma[iSet][iTerm]*TMath::Power(x,iTerm);  
-
-    nSigmas[iHypothesys] = fabs((m2 - mean)/sigma);
-    fTrackPidTof[iHypothesys][trackId] = nSigmas[iHypothesys];
-  }
-
-  double minNSigma = nSigmas[0];
-  int minHypothesis = 0;
-  for(int iHypothesys=1; iHypothesys<3; iHypothesys++)
-  {
-    if(minNSigma > nSigmas[iHypothesys]) 
-    {
-      minNSigma = nSigmas[iHypothesys];
-      minHypothesis = iHypothesys;
-    }
-  }
-
-  int pdgHypothesis[3] = {211, 321, 2212};
-  vector<int> tofPID;
-
-  if(fStrictTofPID)
-  {
-    if(minNSigma < 3)
-      tofPID.push_back(pdgHypothesis[minHypothesis]*q);
-  }
-  else
-  {    
-    for(int iHypothesys=0; iHypothesys<3; iHypothesys++)
-      if(nSigmas[iHypothesys] < 3)
-        tofPID.push_back(pdgHypothesis[iHypothesys]*q);
-  }
-
-  return tofPID;
-}
-
-//mine
+//use chenlu cuts
 std::vector<int> StKFParticleInterface::GetPID(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId)
 {
 
-
-  //  vector<int> ToFPDG;
-  //  if(isTofm2)
-  //    ToFPDG = GetTofPID(m2, p, q, trackId);
-
-  for(int iPdg=0; iPdg<3; iPdg++)
-    fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
-
-
-  //  vector<int> dEdXPDG;
-  //  float nSigmaCut = 3.f; //TODO
+	/*
+		 vector<int> ToFPDG;
+		 if(isTofm2)
+		 ToFPDG = GetTofPID(m2, p, q, trackId);
+		 */  
+	/* 
+		 vector<int> dEdXPDG;
+		 float nSigmaCut = 3.f; //TODO
 
 
 
-  //  bool checkKTof = false;
-  //  if(fCleanKaonsWitTof)
-  //    checkKTof = (p > 0.5) && (p < 2.);
-  //  bool checkKHasTof = 0;
-  //  for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
-  //    if(abs(ToFPDG[iTofPDG]) == 321)
-  //      checkKHasTof = 1;
+		 bool checkKTof = false;
+		 if(fCleanKaonsWitTof)
+		 checkKTof = (p > 0.5) && (p < 2.);
+		 bool checkKHasTof = 0;
+		 for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+		 if(abs(ToFPDG[iTofPDG]) == 321)
+		 checkKHasTof = 1;
 
-  //  if(dEdXPull[0] < nSigmaCut)                                           dEdXPDG.push_back(211*q);  
-  //  if(dEdXPull[1] < 2.f && ((checkKTof && checkKHasTof) || !checkKTof) ) dEdXPDG.push_back(321*q);
-  //  if(dEdXPull[2] < nSigmaCut)                                           dEdXPDG.push_back(2212*q); 
+		 if(dEdXPull[0] < nSigmaCut)                                           dEdXPDG.push_back(211*q);  
+		 if(dEdXPull[1] < 2.f && ((checkKTof && checkKHasTof) || !checkKTof) ) dEdXPDG.push_back(321*q);
+		 if(dEdXPull[2] < nSigmaCut)                                           dEdXPDG.push_back(2212*q); 
 
-  //  vector<int> totalPDG;
-  //  if(!isTofm2)
-  //    totalPDG = dEdXPDG;
-  //  else
-  //  {
-  //    for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
-  //      for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
-  //        if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
-  //          totalPDG.push_back(ToFPDG[iTofPDG]);        
-  //  }
+		 vector<int> totalPDG;
+		 if(!isTofm2)
+		 totalPDG = dEdXPDG;
+		 else
+		 {
+		 for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+		 for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+		 if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+		 totalPDG.push_back(ToFPDG[iTofPDG]);        
+		 }
+		 */
 
+	//removing tof information
+	vector<int> ToFPDG;
+	//  if(isTofm2)
+	//    ToFPDG = GetTofPID(m2, p, q, trackId);
+	isTofm2 = false;
 
-  //removing tof information
-  vector<int> ToFPDG;
-  //  if(isTofm2)
-  //    ToFPDG = GetTofPID(m2, p, q, trackId);
-  isTofm2 = false;
+	//b
+	fTrackdEdX[trackId] = dEdX;
+	//endb
 
-  //b
-  fTrackdEdX[trackId] = dEdX;
-  //endb
+	for(int iPdg=0; iPdg<3; iPdg++)
+		fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
 
-  for(int iPdg=0; iPdg<3; iPdg++)
-    fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
+	vector<int> dEdXPDG;
+	float nSigmaCut = 3.f; //TODO
 
-  vector<int> dEdXPDG;
-  float nSigmaCut = 3.f; //TODO
+	if(dEdXPull[0] < nSigmaCut) dEdXPDG.push_back(211*q);
+	if(dEdXPull[1] < nSigmaCut)	dEdXPDG.push_back(321*q);
+	//if(dEdXPull[2] < nSigmaCut) dEdXPDG.push_back(2212*q);
 
-  //bool checkKTof = false;
-  //if(fCleanKaonsWitTof)
-  //  checkKTof = (p > 0.5) && (p < 2.);
-  //bool checkKHasTof = 0;
-  //for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
-  //  if(abs(ToFPDG[iTofPDG]) == 321)
-  //    checkKHasTof = 1;
-
-  if(dEdXPull[0] < nSigmaCut)                                           dEdXPDG.push_back(211*q);
-  //if(dEdXPull[1] < 2.f && ((checkKTof && checkKHasTof) || !checkKTof) ) dEdXPDG.push_back(321*q);
-  //if(dEdXPull[1] < 2.f)							dEdXPDG.push_back(321*q);
-  if(dEdXPull[1] < nSigmaCut)							dEdXPDG.push_back(321*q);
-  if(dEdXPull[2] < nSigmaCut)                                           dEdXPDG.push_back(2212*q);
-
-  vector<int> totalPDG;
-  if(!isTofm2)
-    totalPDG = dEdXPDG;
-  else
-  {
-    for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
-      for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
-        if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
-          totalPDG.push_back(ToFPDG[iTofPDG]);
-  }
-  //end removing tof   
-
-  {
-    //    if(dEdXPull[5] < nSigmaCut) totalPDG.push_back(1000020030*q);
-    //    if(dEdXPull[6] < nSigmaCut) { totalPDG.push_back(1000020040*q); }
-
-    //
-    // default KFparicle deuteron pid    
-    //    if(dEdXPull[3] < nSigmaCut && dEdXPull[2] > nSigmaCut) 
-    //      if( isTofm2 && (m2 > 2 && m2<6) ) //if( !isTofm2 || (isTofm2 && (m2 > 2 && m2<6)) )
-    //         totalPDG.push_back(1000010020*q); 
-
-    //if(dEdXPull[3] < nSigmaCut && dEdXPull[2] > nSigmaCut){
-    if(dEdXPull[3] < nSigmaCut ){
-      totalPDG.push_back(1000010020*q);
-    }
+	//for Proton and Deuteron PID, use uplimit and lowlimit at different momentum range
+	double ParfpMean[4]={4.22786,-0.916871,0.431019,0.0540937};
+	double Parfp_30sig_Up[4]={5.3431,-0.946281,0.398812,0.0406416}; //3. sig
+	double Parfp_20sig_Up[4]={4.87305,-0.947033,0.686713,-0.198145}; //2. sig
+	double Parfp_10sig_Up[4]={4.51168,-0.916304,0.673992,-0.196344}; //1. sig
+	double Parfp_30sig_Low[4]={3.07256,-0.879248,0.493871,0.0735467}; //3. sig
+	double ParfdMean[4]={3.07256,-0.879248,0.493871,0.0735467};
+	double Parfd_30sig_Up[4]={12.1708,-1.52211,0.277795,0.156806}; //3. sig
+	double Parfd_30sig_Low[4]={6.76373,-1.41505,0.358821,0.100492}; //3. sig
+	double Parfd_20sig_Low[4]={7.35189,-1.11283,-0.0521774,0.204001}; //2. sig
+	double Parfd_10sig_Low[4]={8.27391,-1.23297,0.1005,0.141251}; //1. sig
 
 
-    if(dEdXPull[4] < nSigmaCut && dEdXPull[3] > nSigmaCut) 
-      totalPDG.push_back(1000010030*q);
-    //      if( isTofm2 && (m2 > 5) ) //if( !isTofm2 || (isTofm2 && (m2 > 5)) )
-    //        totalPDG.push_back(1000010030*q);
+	double lowpBound_30sig = Parfp_30sig_Low[0]*TMath::Power(p, Parfp_30sig_Low[1] + Parfp_30sig_Low[2]*log(p) + Parfp_30sig_Low[3]*log(p)*log(p));
+	double uppBound_30sig = Parfp_30sig_Up[0]*TMath::Power(p, Parfp_30sig_Up[1] + Parfp_30sig_Up[2]*log(p) + Parfp_30sig_Up[3]*log(p)*log(p));
+//	double lowpBound_20sig = Parfp_20sig_Low[0]*TMath::Power(p, Parfp_20sig_Low[1] + Parfp_20sig_Low[2]*log(p) + Parfp_20sig_Low[3]*log(p)*log(p));
+	double uppBound_20sig = Parfp_20sig_Up[0]*TMath::Power(p, Parfp_20sig_Up[1] + Parfp_20sig_Up[2]*log(p) + Parfp_20sig_Up[3]*log(p)*log(p));
 
-    //    if(p>0.6 && p<1.8)
-    if(p>0.4&& p<6.0)    
+		double lowdBound_30sig = Parfd_30sig_Low[0]*TMath::Power(p, Parfd_30sig_Low[1] + Parfd_30sig_Low[2]*log(p) + Parfd_30sig_Low[3]*log(p)*log(p));
+		double updBound_30sig = Parfd_30sig_Up[0]*TMath::Power(p, Parfd_30sig_Up[1] + Parfd_30sig_Up[2]*log(p) + Parfd_30sig_Up[3]*log(p)*log(p));
+		double lowdBound_20sig = Parfd_20sig_Low[0]*TMath::Power(p, Parfd_20sig_Low[1] + Parfd_20sig_Low[2]*log(p) + Parfd_20sig_Low[3]*log(p)*log(p));
+//		double updBound_20sig = Parfd_20sig_Up[0]*TMath::Power(p, Parfd_20sig_Up[1] + Parfd_20sig_Up[2]*log(p) + Parfd_20sig_Up[3]*log(p)*log(p));
+
+	if(p<1.6){
+		if(dEdX>lowpBound_30sig && dEdX<uppBound_30sig) dEdXPDG.push_back(2212*q);
+	}
+	else if(p<3.){
+			if(dEdX>lowpBound_30sig && dEdX<uppBound_20sig) dEdXPDG.push_back(2212*q);
+		}
+
+	vector<int> totalPDG;
+	if(!isTofm2)
+		totalPDG = dEdXPDG;
+	else
+	{
+		for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+			for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+				if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+					totalPDG.push_back(ToFPDG[iTofPDG]);
+	}
+	//end removing tof   
+
+	{
+
+		if(p<1.6){
+			if(dEdX>lowdBound_30sig && dEdX<updBound_30sig) totalPDG.push_back(1000010020*q);
+		}
+		else if(p<3.0){
+			if(dEdX>lowdBound_20sig && dEdX<updBound_30sig) totalPDG.push_back(1000010020*q);
+			}
+
+		if(dEdXPull[4] < nSigmaCut && dEdXPull[3] > nSigmaCut) 
+			if( isTofm2 && (m2 > 5) ) //if( !isTofm2 || (isTofm2 && (m2 > 5)) )
+				totalPDG.push_back(1000010030*q);
+
+		// Add by Chenlu
+
+    if(p>0.4 && p<6.0)
     {
-      double lowerParameters2[4]={24.7439,-1.09225,0.391905,-0.00815047};      //lower 1.5 sigma band
-      double lowerParameters[4]={22.2833,-1.05402,0.361398,0.00668711};      //lower 3.0 sigma band
-      double lowerHe3Bound2 = lowerParameters2[0]*TMath::Power(p, lowerParameters2[1] + lowerParameters2[2]*log(p) + lowerParameters2[3]*log(p)*log(p));
-      double lowerHe3Bound = lowerParameters[0]*TMath::Power(p, lowerParameters[1] + lowerParameters[2]*log(p) + lowerParameters[3]*log(p)*log(p));
+      double lowerHe3Parameters[4] = {22.2833,-1.05402,0.361398,0.00668723}; //3.0 sig
+      double upperHe3Parameters[4] = {32.0856,-1.22651,0.404085,0.0304582}; //2.5 sig
+      double upperHe4Parameters[4] = {52.3905,-1.42659,0.210966,0.121851}; //4.0 sig
+      double lowerHe4Parameters[4] = {30.2657,-1.21224,0.496028,-0.150661}; //3.0 sig added Chenlu 2020.11.10
 
-      //      double upperParameters[4] = {3.36169e+01,-1.33686e+00, 2.82856e-01, 1.91841e-01};
-      double upperParameters[4] = {32.0856,-1.22651,0.404085,0.0304582}; //upper 2.5 sigma      
-      double upperHe3Bound = upperParameters[0]*TMath::Power(p, upperParameters[1] + upperParameters[2]*log(p) + upperParameters[3]*log(p)*log(p));
-
-      double upperHe4Parameters[4] = {52.3905,-1.42659,0.210966,0.121851}; //upper he4 4sigma;
+      double lowerHe3Bound = lowerHe3Parameters[0]*TMath::Power(p, lowerHe3Parameters[1] + lowerHe3Parameters[2]*log(p) + lowerHe3Parameters[3]*log(p)*log(p));
+      double upperHe3Bound = upperHe3Parameters[0]*TMath::Power(p, upperHe3Parameters[1] + upperHe3Parameters[2]*log(p) + upperHe3Parameters[3]*log(p)*log(p));
       double upperHe4Bound = upperHe4Parameters[0]*TMath::Power(p, upperHe4Parameters[1] + upperHe4Parameters[2]*log(p) + upperHe4Parameters[3]*log(p)*log(p));
-
-      double lowerHe4Parameters[4] = {30.2657,-1.21224,0.496028,-0.150661}; // He4 lower 3.0 sigma
       double lowerHe4Bound = lowerHe4Parameters[0]*TMath::Power(p, lowerHe4Parameters[1] + lowerHe4Parameters[2]*log(p) + lowerHe4Parameters[3]*log(p)*log(p));
 
-
-      if(p>=0.85){
-        if( dEdX > lowerHe3Bound && dEdX < upperHe3Bound ) 
-          if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
-            totalPDG.push_back(1000020030*q);
-      }else{
-        if( dEdX > lowerHe3Bound2 && dEdX < upperHe3Bound )
-          if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
-            totalPDG.push_back(1000020030*q);
-      }	
-
-
-
-      if(dEdX > lowerHe4Bound  && dEdX < upperHe4Bound)               
+      if(dEdX > lowerHe3Bound && dEdX < upperHe3Bound && dEdX > 9.)
+        if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
+          totalPDG.push_back(1000020030*q);
+      if(dEdX > lowerHe4Bound && dEdX < upperHe4Bound && dEdX > 9.)
         if( !isTofm2 || (isTofm2 && (m2>2.5) && (m2<6.) ) )
           totalPDG.push_back(1000020040*q);
-
-
     }
-    /*
-       else if(p>=6. && dEdX > 9.)
-       {
-       if(dEdXPull[5] < nSigmaCut && dEdXPull[4] > nSigmaCut) 
-       if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
-       totalPDG.push_back(1000020030*q);
-       if(dEdXPull[6] < nSigmaCut && dEdXPull[5] > nSigmaCut) 
-       if( !isTofm2 || (isTofm2 && (m2>2.5) && (m2<6.) ) )
-       totalPDG.push_back(1000020040*q);
-       }
-       */
-  }
+    else if(p>=6.0 && dEdX > 9.)
+    {
+      if(dEdXPull[5] < nSigmaCut && dEdXPull[4] > nSigmaCut)
+        if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
+          totalPDG.push_back(1000020030*q);
+      if(dEdXPull[6] < nSigmaCut && dEdXPull[5] > nSigmaCut)
+        if( !isTofm2 || (isTofm2 && (m2>2.5) && (m2<6.) ) )
+          totalPDG.push_back(1000020040*q);
+    }
 
-  if(totalPDG.size() == 0)
-    totalPDG.push_back(-1);
+	}
 
-  return totalPDG;
-  }
+	if(totalPDG.size() == 0)
+		totalPDG.push_back(-1);
+
+	return totalPDG;
+}
+
+std::vector<int> StKFParticleInterface::GetMCPID(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId)
+{
+
+	//removing tof information
+	vector<int> ToFPDG;
+	//  if(isTofm2)
+	//    ToFPDG = GetTofPID(m2, p, q, trackId);
+	isTofm2 = false;
+
+	//b
+	fTrackdEdX[trackId] = dEdX;
+	//endb
+
+	for(int iPdg=0; iPdg<3; iPdg++)
+		fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
+
+	vector<int> dEdXPDG;
+	float nSigmaCut = 3.f; //TODO
+
+	if (dEdXPull[0]<4) dEdXPDG.push_back(211*q); //set very loose cut for pion
+	else{
+		double Parfp_30sig_Up[4]={5.3431,-0.946281,0.398812,0.0406416}; //3. sig
+		double Parfd_30sig_Low[4]={6.44733,-1.63436,0.59876,0.0256807}; //3. sig for official embedding
+		//double Parfd_30sig_Low[4]={8.34615,-2.04876,1.08719,-0.216195}; //3. sig for private embedding
+		//double Parfd_30sig_Low[4]={5.72906,-0.548415,-0.899034,0.63003}; //3. sig for yue-hang embedding
+		double Parfp_20sig_Up[4]={4.87305,-0.947033,0.686713,-0.198145}; //2. sig
+
+		double uppBound_30sig = Parfp_30sig_Up[0]*TMath::Power(p, Parfp_30sig_Up[1] + Parfp_30sig_Up[2]*log(p) + Parfp_30sig_Up[3]*log(p)*log(p));
+		double uppBound_20sig = Parfp_20sig_Up[0]*TMath::Power(p, Parfp_20sig_Up[1] + Parfp_20sig_Up[2]*log(p) + Parfp_20sig_Up[3]*log(p)*log(p));
+		double lowdBound_30sig= Parfd_30sig_Low[0]*TMath::Power(p, Parfd_30sig_Low[1] + Parfd_30sig_Low[2]*log(p) + Parfd_30sig_Low[3]*log(p)*log(p));
+
+		if(p<1.2){
+			if(dEdX<uppBound_30sig) dEdXPDG.push_back(2212*q);
+			else dEdXPDG.push_back(1000010020*q);
+		}
+		else if(p<3.){
+			if(dEdX<lowdBound_30sig) dEdXPDG.push_back(2212*q);
+			else dEdXPDG.push_back(1000010020*q);
+		}
+		//else dEdXPDG.push_back(1000010020*q);
+
+	}
+
+	vector<int> totalPDG;
+	if(!isTofm2)
+		totalPDG = dEdXPDG;
+	else
+	{
+		for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+			for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+				if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+					totalPDG.push_back(ToFPDG[iTofPDG]);
+	}
+	//end removing tof   
+
+	if(totalPDG.size() == 0)
+		totalPDG.push_back(-1);
+
+	return totalPDG;
+}
+std::vector<int> StKFParticleInterface::GetMCPID_dLd(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId)
+{
+  //spectial for dLd embedding
+  //d is from real tracks
+	//removing tof information
+	vector<int> ToFPDG;
+	//  if(isTofm2)
+	//    ToFPDG = GetTofPID(m2, p, q, trackId);
+	isTofm2 = false;
+
+	//b
+	fTrackdEdX[trackId] = dEdX;
+	//endb
+
+	for(int iPdg=0; iPdg<3; iPdg++)
+		fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
+
+	vector<int> dEdXPDG;
+	float nSigmaCut = 3.f; //TODO
+
+	if (dEdXPull[0]<4) dEdXPDG.push_back(211*q); //set very loose cut for pion
+	else{
+		double Parfp_30sig_Up[4]={5.3431,-0.946281,0.398812,0.0406416}; //3. sig
+		// double Parfd_30sig_Low[4]={6.44733,-1.63436,0.59876,0.0256807}; //3. sig for official embedding
+		//double Parfd_30sig_Low[4]={8.34615,-2.04876,1.08719,-0.216195}; //3. sig for private embedding
+		//double Parfd_30sig_Low[4]={5.72906,-0.548415,-0.899034,0.63003}; //3. sig for yue-hang embedding
+		double Parfp_20sig_Up[4]={4.87305,-0.947033,0.686713,-0.198145}; //2. sig
+    double Parfd_30sig_Up[4]={12.1708,-1.52211,0.277795,0.156806}; //3. sig data
+    double Parfd_30sig_Low[4]={6.76373,-1.41505,0.358821,0.100492}; //3. sig data
+    double Parfd_20sig_Low[4]={7.35189,-1.11283,-0.0521774,0.204001}; //2. sig data
+    double Parfd_10sig_Low[4]={8.27391,-1.23297,0.1005,0.141251}; //1. sig data
+
+		double uppBound_30sig = Parfp_30sig_Up[0]*TMath::Power(p, Parfp_30sig_Up[1] + Parfp_30sig_Up[2]*log(p) + Parfp_30sig_Up[3]*log(p)*log(p));
+		double uppBound_20sig = Parfp_20sig_Up[0]*TMath::Power(p, Parfp_20sig_Up[1] + Parfp_20sig_Up[2]*log(p) + Parfp_20sig_Up[3]*log(p)*log(p));
+		double lowdBound_30sig= Parfd_30sig_Low[0]*TMath::Power(p, Parfd_30sig_Low[1] + Parfd_30sig_Low[2]*log(p) + Parfd_30sig_Low[3]*log(p)*log(p));
+    double lowdBound_20sig = Parfd_20sig_Low[0]*TMath::Power(p, Parfd_20sig_Low[1] + Parfd_20sig_Low[2]*log(p) + Parfd_20sig_Low[3]*log(p)*log(p));
+		double updBound_30sig = Parfd_30sig_Up[0]*TMath::Power(p, Parfd_30sig_Up[1] + Parfd_30sig_Up[2]*log(p) + Parfd_30sig_Up[3]*log(p)*log(p));
+
+		if(p<1.2){
+			if(dEdX<uppBound_30sig) dEdXPDG.push_back(2212*q);
+			// else dEdXPDG.push_back(1000010020*q);
+		}
+		else if(p<3.){
+			if(dEdX<lowdBound_30sig) dEdXPDG.push_back(2212*q);
+			// else dEdXPDG.push_back(1000010020*q);
+		}
+		if(p<1.6){
+			if(dEdX>lowdBound_30sig && dEdX<updBound_30sig) dEdXPDG.push_back(1000010020*q);
+		}
+		else if(p<3.0){
+			if(dEdX>lowdBound_20sig && dEdX<updBound_30sig) dEdXPDG.push_back(1000010020*q);
+			}
+
+	}
+
+	vector<int> totalPDG;
+	if(!isTofm2)
+		totalPDG = dEdXPDG;
+	else
+	{
+		for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+			for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+				if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+					totalPDG.push_back(ToFPDG[iTofPDG]);
+	}
+	//end removing tof   
+
+	if(totalPDG.size() == 0)
+		totalPDG.push_back(-1);
+
+	return totalPDG;
+}
+// std::vector<int> StKFParticleInterface::GetTofPID(double m2, double p, int q, const int trackId)
+// {
+//   static const int order = 4;
+//   static const double parMean[6][order+1] = { { 0.02283190,-0.01482910, 0.01883130,-0.01824250, 0.00409811  }, //pi+
+//     { 0.24842500,-0.00699781,-0.00991387, 0.01327170,-0.00694824  }, //K+
+//     { 0.863211  , 0.0264171 ,-0.0230833 , 0.00239637, 0.000262309 }, //p
+//     { 0.0224095 ,-0.0123235 , 0.0145216 ,-0.0149944 , 0.00325952  }, //pi-
+//     { 0.250696  ,-0.0151308 , 0.00437457, 0.00516669,-0.00529184  }, //K-
+//     { 0.886912  ,-0.0298543 , 0.0449904 ,-0.0286879 , 0.00541963  }};//p-
+//   static const double parSigma[6][order+1] = { { 0.0112498,-0.0400571, 0.0733615,-0.0316505, 0.00629469 }, //pi+
+//     { 0.0154830,-0.0396312, 0.0719647,-0.0290683, 0.00637164 }, //K+
+//     { 0.114465 ,-0.287213 , 0.356536 ,-0.169257 , 0.0299844  }, //p
+//     { 0.0111682,-0.0394877, 0.0718342,-0.0302914, 0.00587317 }, //pi-
+//     { 0.0157322,-0.0402606, 0.0716639,-0.0272101, 0.00564467 }, //K-
+//     { 0.0899438,-0.211922 , 0.273122 ,-0.129597 , 0.0231844  }};//p-
+//   double pMax = 2.;
+//   double nSigmas[3];
+//   for(int iHypothesys = 0; iHypothesys<3; iHypothesys++)
+//   {
+//     double x = p;
+//     if(x>=pMax) x = pMax;
+//
+//     int iSet = iHypothesys;
+//     if(q<0)
+//       iSet += 3;
+//     double mean = 0;
+//     for(int iTerm=0; iTerm<=order; iTerm++)
+//       mean += parMean[iSet][iTerm]*TMath::Power(x,iTerm);  
+//
+//     double sigma = 0;
+//     for(int iTerm=0; iTerm<=order; iTerm++)
+//       sigma += parSigma[iSet][iTerm]*TMath::Power(x,iTerm);  
+//
+//     nSigmas[iHypothesys] = fabs((m2 - mean)/sigma);
+//     fTrackPidTof[iHypothesys][trackId] = nSigmas[iHypothesys];
+//   }
+//
+//   double minNSigma = nSigmas[0];
+//   int minHypothesis = 0;
+//   for(int iHypothesys=1; iHypothesys<3; iHypothesys++)
+//   {
+//     if(minNSigma > nSigmas[iHypothesys]) 
+//     {
+//       minNSigma = nSigmas[iHypothesys];
+//       minHypothesis = iHypothesys;
+//     }
+//   }
+//
+//   int pdgHypothesis[3] = {211, 321, 2212};
+//   vector<int> tofPID;
+//
+//   if(fStrictTofPID)
+//   {
+//     if(minNSigma < 3)
+//       tofPID.push_back(pdgHypothesis[minHypothesis]*q);
+//   }
+//   else
+//   {    
+//     for(int iHypothesys=0; iHypothesys<3; iHypothesys++)
+//       if(nSigmas[iHypothesys] < 3)
+//         tofPID.push_back(pdgHypothesis[iHypothesys]*q);
+//   }
+//
+//   return tofPID;
+// }
+
+//mine
+// std::vector<int> StKFParticleInterface::GetPID(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId)
+// {
+//
+//
+//   //  vector<int> ToFPDG;
+//   //  if(isTofm2)
+//   //    ToFPDG = GetTofPID(m2, p, q, trackId);
+//
+//   for(int iPdg=0; iPdg<3; iPdg++)
+//     fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
+//
+//
+//   //  vector<int> dEdXPDG;
+//   //  float nSigmaCut = 3.f; //TODO
+//
+//
+//
+//   //  bool checkKTof = false;
+//   //  if(fCleanKaonsWitTof)
+//   //    checkKTof = (p > 0.5) && (p < 2.);
+//   //  bool checkKHasTof = 0;
+//   //  for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+//   //    if(abs(ToFPDG[iTofPDG]) == 321)
+//   //      checkKHasTof = 1;
+//
+//   //  if(dEdXPull[0] < nSigmaCut)                                           dEdXPDG.push_back(211*q);  
+//   //  if(dEdXPull[1] < 2.f && ((checkKTof && checkKHasTof) || !checkKTof) ) dEdXPDG.push_back(321*q);
+//   //  if(dEdXPull[2] < nSigmaCut)                                           dEdXPDG.push_back(2212*q); 
+//
+//   //  vector<int> totalPDG;
+//   //  if(!isTofm2)
+//   //    totalPDG = dEdXPDG;
+//   //  else
+//   //  {
+//   //    for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+//   //      for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+//   //        if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+//   //          totalPDG.push_back(ToFPDG[iTofPDG]);        
+//   //  }
+//
+//
+//   //removing tof information
+//   vector<int> ToFPDG;
+//   //  if(isTofm2)
+//   //    ToFPDG = GetTofPID(m2, p, q, trackId);
+//   isTofm2 = false;
+//
+//   //b
+//   fTrackdEdX[trackId] = dEdX;
+//   //endb
+//
+//   for(int iPdg=0; iPdg<3; iPdg++)
+//     fTrackPidTpc[iPdg][trackId] = dEdXPull[iPdg];
+//
+//   vector<int> dEdXPDG;
+//   float nSigmaCut = 3.f; //TODO
+//
+//   //bool checkKTof = false;
+//   //if(fCleanKaonsWitTof)
+//   //  checkKTof = (p > 0.5) && (p < 2.);
+//   //bool checkKHasTof = 0;
+//   //for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+//   //  if(abs(ToFPDG[iTofPDG]) == 321)
+//   //    checkKHasTof = 1;
+//
+//   if(dEdXPull[0] < nSigmaCut)                                           dEdXPDG.push_back(211*q);
+//   //if(dEdXPull[1] < 2.f && ((checkKTof && checkKHasTof) || !checkKTof) ) dEdXPDG.push_back(321*q);
+//   //if(dEdXPull[1] < 2.f)							dEdXPDG.push_back(321*q);
+//   if(dEdXPull[1] < nSigmaCut)							dEdXPDG.push_back(321*q);
+//   if(dEdXPull[2] < nSigmaCut)                                           dEdXPDG.push_back(2212*q);
+//
+//   vector<int> totalPDG;
+//   if(!isTofm2)
+//     totalPDG = dEdXPDG;
+//   else
+//   {
+//     for(unsigned int iPDG=0; iPDG<dEdXPDG.size(); iPDG++)
+//       for(unsigned int iTofPDG=0; iTofPDG<ToFPDG.size(); iTofPDG++)
+//         if(dEdXPDG[iPDG] == ToFPDG[iTofPDG])
+//           totalPDG.push_back(ToFPDG[iTofPDG]);
+//   }
+//   //end removing tof   
+//
+//   {
+//     //    if(dEdXPull[5] < nSigmaCut) totalPDG.push_back(1000020030*q);
+//     //    if(dEdXPull[6] < nSigmaCut) { totalPDG.push_back(1000020040*q); }
+//
+//     //
+//     // default KFparicle deuteron pid    
+//     //    if(dEdXPull[3] < nSigmaCut && dEdXPull[2] > nSigmaCut) 
+//     //      if( isTofm2 && (m2 > 2 && m2<6) ) //if( !isTofm2 || (isTofm2 && (m2 > 2 && m2<6)) )
+//     //         totalPDG.push_back(1000010020*q); 
+//
+//     //if(dEdXPull[3] < nSigmaCut && dEdXPull[2] > nSigmaCut){
+//     if(dEdXPull[3] < nSigmaCut ){
+//       totalPDG.push_back(1000010020*q);
+//     }
+//
+//
+//     if(dEdXPull[4] < nSigmaCut && dEdXPull[3] > nSigmaCut) 
+//       totalPDG.push_back(1000010030*q);
+//     //      if( isTofm2 && (m2 > 5) ) //if( !isTofm2 || (isTofm2 && (m2 > 5)) )
+//     //        totalPDG.push_back(1000010030*q);
+//
+//     //    if(p>0.6 && p<1.8)
+//     if(p>0.4&& p<6.0)    
+//     {
+//       double lowerParameters2[4]={24.7439,-1.09225,0.391905,-0.00815047};      //lower 1.5 sigma band
+//       double lowerParameters[4]={22.2833,-1.05402,0.361398,0.00668711};      //lower 3.0 sigma band
+//       double lowerHe3Bound2 = lowerParameters2[0]*TMath::Power(p, lowerParameters2[1] + lowerParameters2[2]*log(p) + lowerParameters2[3]*log(p)*log(p));
+//       double lowerHe3Bound = lowerParameters[0]*TMath::Power(p, lowerParameters[1] + lowerParameters[2]*log(p) + lowerParameters[3]*log(p)*log(p));
+//
+//       //      double upperParameters[4] = {3.36169e+01,-1.33686e+00, 2.82856e-01, 1.91841e-01};
+//       double upperParameters[4] = {32.0856,-1.22651,0.404085,0.0304582}; //upper 2.5 sigma      
+//       double upperHe3Bound = upperParameters[0]*TMath::Power(p, upperParameters[1] + upperParameters[2]*log(p) + upperParameters[3]*log(p)*log(p));
+//
+//       double upperHe4Parameters[4] = {52.3905,-1.42659,0.210966,0.121851}; //upper he4 4sigma;
+//       double upperHe4Bound = upperHe4Parameters[0]*TMath::Power(p, upperHe4Parameters[1] + upperHe4Parameters[2]*log(p) + upperHe4Parameters[3]*log(p)*log(p));
+//
+//       double lowerHe4Parameters[4] = {30.2657,-1.21224,0.496028,-0.150661}; // He4 lower 3.0 sigma
+//       double lowerHe4Bound = lowerHe4Parameters[0]*TMath::Power(p, lowerHe4Parameters[1] + lowerHe4Parameters[2]*log(p) + lowerHe4Parameters[3]*log(p)*log(p));
+//
+//
+//       if(p>=0.85){
+//         if( dEdX > lowerHe3Bound && dEdX < upperHe3Bound ) 
+//           if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
+//             totalPDG.push_back(1000020030*q);
+//       }else{
+//         if( dEdX > lowerHe3Bound2 && dEdX < upperHe3Bound )
+//           if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
+//             totalPDG.push_back(1000020030*q);
+//       }	
+//
+//
+//
+//       if(dEdX > lowerHe4Bound  && dEdX < upperHe4Bound)               
+//         if( !isTofm2 || (isTofm2 && (m2>2.5) && (m2<6.) ) )
+//           totalPDG.push_back(1000020040*q);
+//
+//
+//     }
+//     #<{(|
+//        else if(p>=6. && dEdX > 9.)
+//        {
+//        if(dEdXPull[5] < nSigmaCut && dEdXPull[4] > nSigmaCut) 
+//        if( !isTofm2 || (isTofm2 && (m2>1.) && (m2<5.) ) )
+//        totalPDG.push_back(1000020030*q);
+//        if(dEdXPull[6] < nSigmaCut && dEdXPull[5] > nSigmaCut) 
+//        if( !isTofm2 || (isTofm2 && (m2>2.5) && (m2<6.) ) )
+//        totalPDG.push_back(1000020040*q);
+//        }
+//        |)}>#
+//   }
+//
+//   if(totalPDG.size() == 0)
+//     totalPDG.push_back(-1);
+//
+//   return totalPDG;
+// }
 
 
   //TFG
@@ -1003,30 +1288,30 @@ bool StKFParticleInterface::ProcessEvent(StPicoDst* picoDst, std::vector<int>& t
   vtxb[0] = picoPV.x();
   vtxb[1] = picoPV.y();
   vtxb[2] = picoPV.z();
-  if(fRotation){
-    for(int iTr=0; iTr<nPartSaved; iTr++){
-      if(fParticlesPdg[iTr]==fRotationPID){
-        fParticles[iTr].RotateXY(fRotationAngle,vtxb);
-      }
-    }
-  }
+  // if(fRotation){
+  //   for(int iTr=0; iTr<nPartSaved; iTr++){
+  //     if(fParticlesPdg[iTr]==fRotationPID){
+  //       fParticles[iTr].RotateXY(fRotationAngle,vtxb);
+  //     }
+  //   }
+  // }
 if(fRotation){
    for(int iTr=0; iTr<nPartSaved; iTr++){
    if(fParticlesPdg[iTr]==fRotationPID){
-       if (fRotationAngle==-1) {
+       if (fabs(fRotationAngle+1)<1e-6) {
           TRandom *tRandom = new TRandom();
           tRandom->SetSeed(0);
           fRotationAngle = tRandom->Uniform(0,TMath::Pi());
           delete tRandom;
         }
-      else if (fRotationAngle==-2) {
+      else if (fabs(fRotationAngle+2)<1e-6) {
           TRandom *tRandom = new TRandom();
           tRandom->SetSeed(0);
           fRotationAngle = tRandom->Uniform(180-30,180+30);
           fRotationAngle = fRotationAngle * 3.14 / 180.;
           delete tRandom;
         }
-      else if (fRotationAngle==-3) {
+      else if (fabs(fRotationAngle+3)<1e-6) {
           TRandom *tRandom = new TRandom();
           tRandom->SetSeed(0);
           fRotationAngle = tRandom->Gaus(180,30);
@@ -1403,6 +1688,22 @@ bool StKFParticleInterface::ProcessEvent(StMuDst* muDst, vector<KFMCTrack>& mcTr
                                   fabs(mugTrack->dEdxPull(3.728400, fdEdXMode, 2))};  //6 - He4
                                   */   
     vector<int> totalPDG = GetPID(m2tof, track.GetP(), q, mugTrack->dEdx()*1.e6, dEdXPull, isTofm2, index);
+    // cout << totalPDG.size()<< endl;
+
+    // if mc track, then set PID as true PID
+     if ( mcIndices[index]>0) 
+     {
+       int geantID = muDst->MCtrack(mcIndices[index])->GePid();
+       if (geantID == 8) totalPDG.push_back(211);
+       if (geantID == 9) totalPDG.push_back(-211);
+       if (geantID == 14) totalPDG.push_back(2212);
+       if (geantID == 15) totalPDG.push_back(-2212);
+       if (geantID == 51045 || geantID == 45) totalPDG.push_back(q*1000010020);
+     } 
+    
+    
+    // vector<int> totalPDG = GetMCPID(m2tof, track.GetP(), q, mugTrack->dEdx()*1.e6, dEdXPull, isTofm2, index);
+    // vector<int> totalPDG = GetMCPID_dLd(m2tof, track.GetP(), q, mugTrack->dEdx()*1.e6, dEdXPull, isTofm2, index); //only for d(data)+Ld(MC)
 
     //b
     fNHits[index] = mugTrack->nHitsFit();
@@ -1422,14 +1723,41 @@ bool StKFParticleInterface::ProcessEvent(StMuDst* muDst, vector<KFMCTrack>& mcTr
   vtxb[0] = muDst->primaryVertex()->position().x();
   vtxb[1] = muDst->primaryVertex()->position().y();
   vtxb[2] = muDst->primaryVertex()->position().z();
-  if(fRotation){
-    for(int iTr=0; iTr<nPartSaved; iTr++){
-      if(fParticlesPdg[iTr]==fRotationPID){
-        fParticles[iTr].RotateXY(fRotationAngle,vtxb);
-      }
-    }
-  }
-
+  // if(fRotation){
+  //   for(int iTr=0; iTr<nPartSaved; iTr++){
+  //     if(fParticlesPdg[iTr]==fRotationPID){
+  //       fParticles[iTr].RotateXY(fRotationAngle,vtxb);
+  //     }
+  //   }
+  // }
+if(fRotation){
+   for(int iTr=0; iTr<nPartSaved; iTr++){
+   if(fParticlesPdg[iTr]==fRotationPID){
+       if (fabs(fRotationAngle+1)<1e-6) {
+          TRandom *tRandom = new TRandom();
+          tRandom->SetSeed(0);
+          fRotationAngle = tRandom->Uniform(0,TMath::Pi());
+          delete tRandom;
+        }
+      else if (fabs(fRotationAngle+2)<1e-6) {
+          TRandom *tRandom = new TRandom();
+          tRandom->SetSeed(0);
+          fRotationAngle = tRandom->Uniform(180-30,180+30);
+          fRotationAngle = fRotationAngle * 3.14 / 180.;
+          delete tRandom;
+        }
+      else if (fabs(fRotationAngle+3)<1e-6) {
+          TRandom *tRandom = new TRandom();
+          tRandom->SetSeed(0);
+          fRotationAngle = tRandom->Gaus(180,30);
+          while(fRotationAngle<90 || fRotationAngle>270){fRotationAngle = tRandom->Gaus(180,30);}
+          fRotationAngle = fRotationAngle * 3.14 / 180.;
+          delete tRandom;
+        }
+       fParticles[iTr].RotateXY(fRotationAngle,vtxb);
+     }
+   }
+}
   //if( 10*primaryTrackList.size() < (nUsedTracks - primaryTrackList.size()) ) cout<<"primaryTrackList.size():"<<primaryTrackList.size()<<" "<<nUsedTracks<<" "<<countrefmult<<endl; 
 
   if( fCleanLowPVTrackEvents && ( 10*primaryTrackList.size() < (nUsedTracks - primaryTrackList.size()) ) ) return 0;

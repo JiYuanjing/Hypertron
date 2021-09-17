@@ -9,3 +9,6 @@ StRoot_mixed
 star_lib_forcheck
 *.swp
 *.package
+H3L_3body_yuehang/data/mixed/LambdaMC_mix.root.pid1
+H3L_3body_yuehang/data/mixed/fillhist.C
+H3L_3body_yuehang/data/mixed/LambdaMC.root.v1

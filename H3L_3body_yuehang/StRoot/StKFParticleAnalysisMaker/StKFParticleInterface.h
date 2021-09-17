@@ -110,7 +110,7 @@ class StKFParticleInterface: public TObject
     
   //Rotation
   void SetRotation() { fRotation = true; }
-  void SetRotationAngle(float angle) { fRotationAngle = angle; }
+  void SetRotationAngle(int angle) { fRotationAngle = angle; }
   void SetRotationPID(int pid)       { fRotationPID = pid; }
   
   //smearing
@@ -150,6 +150,8 @@ class StKFParticleInterface: public TObject
   bool GetTrack(const StDcaGeometry& dcaG, KFPTrack& track, int q, int index);
   std::vector<int> GetTofPID(double m2, double p, int q, const int trackId);
   std::vector<int> GetPID(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId);
+  std::vector<int> GetMCPID(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId);//Get the MC input PID. Added by FY-Zhao, 20210505
+  std::vector<int> GetMCPID_dLd(double m2, double p, int q, double dEdX, double dEdXPull[7], bool isTofm2, const int trackId);//only for Ld+d embedding
   void AddTrackToParticleList(const KFPTrack& track, int nHftHitsInTrack, int index, const std::vector<int>& totalPDG, KFVertex& pv, std::vector<int>& primaryTrackList,
                               std::vector<int>& nHftHits, std::vector<int>& particlesPdg, std::vector<KFParticle>& particles, int& nPartSaved);
   void FillPIDHistograms(StPicoTrack *gTrack, const std::vector<int>& pdgVector, const bool isTofm2, float m2tof);

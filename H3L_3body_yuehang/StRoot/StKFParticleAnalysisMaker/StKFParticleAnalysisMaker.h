@@ -225,7 +225,15 @@ float v_12_chi2ndf;
   float v_01_pvdca;
   float v_02_pvdca;
   float v_12_pvdca;
-
+  float v_01_x;
+  float v_01_y;
+  float v_01_z;
+  float v_02_x;
+  float v_02_y;
+  float v_02_z;
+  float v_12_x;
+  float v_12_y;
+  float v_12_z;
 
   float bmcpx;
   float bmcpy;
@@ -354,9 +362,10 @@ float b2mcpz;
   TString fCentralityFile;
 
   bool fMixEvent;
+  bool fMCMixEvent;
 
   // std::vector <StMixEvent> bMixEventBuffer[nCentralityBins][nEPbins];
-  std::deque <StMixEvent> bMixEventBuffer[nCentralityBins][nEPbins][nVtxbins];
+  std::deque <StMixEvent> bMixEventBuffer[Cuts::nCentralityBins][Cuts::nEPbins][Cuts::nVtxbins];
   int EPbin, Vtxbin;
  
  //functions 
@@ -366,7 +375,7 @@ float b2mcpz;
 
   void GetDaughterParameters(const int iReader, int& iDaughterTrack, int& iDaughterParticle, KFParticle& particle);
   void GetParticleParameters(const int iReader, KFParticle& particle);
-  long  GetUniqueEventId(const int iRun, const int iEvent) const;
+  long GetUniqueEventId(const int iRun, const int iEvent) const;
   
   int GetTMVACentralityBin(int iReader, int centrality);
   int GetTMVAPtBin(int iReader, double pt);
@@ -378,22 +387,22 @@ float b2mcpz;
   {
     //split ep in nEPbins for mix
     double p=3.14159265;
-    double edge[nEPbins+1];
-    edge[nEPbins]=p;
+    double edge[Cuts::nEPbins+1];
+    edge[Cuts::nEPbins]=p;
    
-    for (int i=0;i<nEPbins;i++) {edge[i]=i*p*2.0/nEPbins-p; }
+    for (int i=0;i<Cuts::nEPbins;i++) {edge[i]=i*p*2.0/Cuts::nEPbins-p; }
     int idx=-999;
-    for (int i=0;i<nEPbins;i++)
+    for (int i=0;i<Cuts::nEPbins;i++)
     {
       if (ep>=edge[i] && ep<edge[i+1]) {idx=i;break;}
     }
-    if (idx>=0 && idx<nEPbins) return idx;
+    if (idx>=0 && idx<Cuts::nEPbins) return idx;
     else { cout <<"event plane angle out of range! ep=" <<ep << endl; return -999;} 
   } 
   int getVtxBin(float vx, float vy, float vz);
 
 void FillDaughterInfo(KFParticle& daughter, int trackId, int PDG, float &chi2primary, int &nhits, float &dca,float& sigma, float& bm2);
-bool FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deuteron, KFParticle& PPi, double dVx, double dVy, double dVz, int mode);
+bool FillThreeDaughtersMix(KFParticle pion, KFParticle proton, KFParticle deuteron, KFParticle PPi, double dVx, double dVy, double dVz, int mode);
 
 
  public: 
@@ -447,8 +456,15 @@ bool FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deu
       fRunCentralityAnalysis = true;
       fMixEventBufferSize = buffersize;
   }
-
+  void RunMCMixEvent(int buffersize)       
+  { 
+      fMCMixEvent= true; 
+      // fFlowAnalysis = false;
+      fRunCentralityAnalysis = true;
+      fMixEventBufferSize = buffersize;
+  }
   Int_t Centrality(int gRefMult );
+  Int_t Centrality16(int gRefMult );
   Double_t FitWeight(Double_t refMult);
   
   void RunCentralityAnalysis() { fRunCentralityAnalysis = true; }

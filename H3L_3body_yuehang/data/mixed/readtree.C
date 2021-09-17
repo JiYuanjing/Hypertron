@@ -13,7 +13,7 @@
 #include <fstream>
 
 // void readtree(TString mInputlist="H3L3b_tree_mc.root", int mode = 0, TString outfile="fout_H3L.root")
-void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1, int const isMix=0)
+void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1, int const isMix=0, int centLow=0, int centHigh=8)
 {
   TStopwatch time;
   time.Start();
@@ -32,6 +32,13 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   double const mass_ld = 1.11568;
   double const mass_p = 0.93827;
   double const mass_pi = 0.13957;
+
+  TF1* fH3Ldydpt[3];
+  double par[3][3]={{0.267422, 43782.6, 2.99339}, {0.200836, 92736.2,2.99339}, {0.136789, 136882, 2.99339} };
+  for (int irap=0;irap<3;irap++) {
+      fH3Ldydpt[irap] = new TF1(Form("fH3Ldydpt[%d]",irap), "x*[1]*exp(-(sqrt([2]*[2]+x*x)-[2])/[0])", 0,5);
+      fH3Ldydpt[irap]->SetParameters(par[irap]);
+  }
 
   //weighting function for MC
   if (mcState!=0){
@@ -77,22 +84,33 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
 
     ////////uniform  mc pt y distribution/////////
     /*  if (mode==0) fgpt_0= new TFile("ht_input_mc_fine_v20.root","READ"); */
-    if (mode==0 && mcState==1) fgpt_0= new TFile("fH3L_phase_quasi_wt.root","READ");
-    if (mode==0 && mcState==1 && mInputlist.Contains("phase")) fgpt_0= new TFile("fH3L_phase_phase_wt.root","READ");  //phase space decay
-    /*  if (mode==1) fgpt_0 = new TFile("ld_input_mc_fine_v20.root","READ");//more stats */
-    if (mode==1 || (mcState==-20 && mode==0)) fgpt_0 = new TFile("flambda_phase_wt.root","READ");//more stats
-    /*  TH2F*  g_pt_fine_in = (TH2F*)fgpt_0->Get("g_pt_fine")->Clone("g_pt_fine_in"); */
-    g_pt_fine_in = (TH2F*)fgpt_0->Get("hPhase")->Clone("g_pt_fine_in");
-    cout <<"finish book mc weighting functions." << endl;
+    // if (mode==0 && mcState==1) fgpt_0= new TFile("fH3L_phase_quasi_wt.root","READ");
+    if (mode==0 && mcState==1) 
+    {
+      fgpt_0= new TFile("fMC_H3L_wt.root","READ");
+      g_pt_fine_in = (TH2F*)fgpt_0->Get("hPhase")->Clone("g_pt_fine_in");
+    }
+    if (mode==0 && mcState==1 && mInputlist.Contains("phase")) {
+      fgpt_0= new TFile("fH3L_phase_phase_wt.root","READ");  //phase space decay
+      g_pt_fine_in = (TH2F*)fgpt_0->Get("hPhase")->Clone("g_pt_fine_in");
+    }
+    // if (mode==1) fgpt_0 = new TFile("ld_input_mc_fine_v20.root","READ");//more stats
+    // if (mode==1 || (mcState==-20 && mode==0)) fgpt_0 = new TFile("flambda_phase_wt.root","READ");//more stats
+    if (mode==1 || (mcState==-20 && mode==0)) {
+      fgpt_0 = new TFile("ld_input_mc_fine_v20.root","READ");//more stats
+      g_pt_fine_in = (TH2F*)fgpt_0->Get("g_pt_fine")->Clone("g_pt_fine_in");
+    }
+  //   // TH2F*  g_pt_fine_in = (TH2F*)fgpt_0->Get("g_pt_fine")->Clone("g_pt_fine_in");
+  //   cout <<"finish book mc weighting functions." << endl;
   }
-  ///////////////////////end of MC weighting////////////////
-
-  cout <<"start read tree!" << endl;
+  // ///////////////////////end of MC weighting////////////////
+  //
+  // cout <<"start read tree!" << endl;
   TString treename;
   if (mode==1) treename = "lambda_tree";
   if (mode==0) treename = "htriton3_tree";
   TChain htriton3_tree(treename.Data()); 
-
+  //
   // TH1F* hrefmult  = new TH1F("hrefmult_tot", "refmult; hrefmult; N_{evt}", 600,0,600);
   TH1F* hcent  = new TH1F("hcent", "cent; centrality; N_{evt}", 9,-0.5,8.5);
   TH1F* hcentwt  = new TH1F("hcentwt", "centwt; centrality; N_{evt}", 9,-0.5,8.5);
@@ -197,6 +215,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     /* htriton3_tree.SetBranchAddress("v_lambda_mass_0", &v_lambda_mass_0); */
     htriton3_tree.SetBranchAddress("v_lambda_ldl_0", &v_lambda_ldl_0);  // will add later
     htriton3_tree.SetBranchAddress("v_lambda_l_0", &v_lambda_l_0);  // will add later
+    htriton3_tree.SetBranchAddress("v_012_dca", &v_012_dca);  // will add later
 
     /* htriton3_tree.SetBranchAddress("bdpx", &bdpx); */
     /* htriton3_tree.SetBranchAddress("bdpy", &bdpy); */
@@ -231,7 +250,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     htriton3_tree.SetBranchAddress("dca_pi",&dca_pion);
   }
 
-  TH1F* hcentwt = new TH1F("hcharge","hcharge",2,-1.5,1.5);
+  TH1F* hcharge= new TH1F("hcharge","hcharge",2,-1.5,1.5);
   ////Background QA histrograms////////
   //(ppi) QA
   // TH2F* hptppimass = new TH2F("hptppimass","hptppimass;p_{T};mass",100,0,10,400,1.05,1.15);
@@ -281,9 +300,17 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
 
   TH2F* hptH3Lmass  = new TH2F("hptH3Lmass","hptH3Lmass;p_{T};H3L mass",100,0,5,200,2.95,3.05);
   hptH3Lmass->Sumw2();
-  TH3F* hH3LMassPtY= new TH3F("hH3LMassPtY","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 60, -1.5,0);
+  TH3F* hH3LMassPtY= new TH3F("hH3LMassPtY","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 100, -1.,0);
   hH3LMassPtY->Sumw2();
-  TH3F* hH3LMassPtY_5_40= new TH3F("hH3LMassPtY_5_40","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 60, -1.5,0);
+  TH3F* hH3LMassPtYCut[7];
+  for (int i=0;i<7;i++)
+  {
+      hH3LMassPtYCut[i] = new TH3F(Form("hH3LMassPtYCut%d",i),"hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,     3.05, 100, -1.,0);
+      hH3LMassPtYCut[i]->Sumw2();
+  }
+  TH3F* hH3LMassPtCent= new TH3F("hH3LMassPtCent","hH3LMassPtCent;p_{T};H3L mass;Centrality",100,0,5,200,2.95,3.05, 9, -0.5,8.5);
+  hH3LMassPtCent->Sumw2();
+  TH3F* hH3LMassPtY_5_40= new TH3F("hH3LMassPtY_5_40","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 100, -1.,0);
   hH3LMassPtY_5_40->Sumw2();
 
   TH2F* hH3LptProtonPt = new TH2F("hH3LptProtonPt","hH3LptProtonPt; p_{T};", 100, 0, 5, 80, 0, 4);
@@ -294,7 +321,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   //topological variable for H3L
   TH2F* hptH3L_l= new TH2F("hptH3L_l","hptH3L_l;p_{T};l",100,0,5,500,0,100);
   hptH3L_l->Sumw2();
-  TH2F* hptH3L_ldl= new TH2F("hptH3L_ldl","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
+  TH2F* hptH3L_ldl= new TH2F("hptH3L_ldl","hptH3L_ldl;p_{T};ldl",100,0,5,250,0,50);
   hptH3L_ldl->Sumw2();
   TH2F* hptH3L_dchi2prim= new TH2F("hptH3L_dchi2prim","hptH3L_dchi2pri;p_{T};d chi2prim",100,0,5,100,0,20);
   hptH3L_dchi2prim->Sumw2();
@@ -304,7 +331,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_pchi2prim->Sumw2();
   TH2F* hptH3L_chi2topo= new TH2F("hptH3L_chi2topo","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
   hptH3L_chi2topo->Sumw2();
-  TH2F* hptH3L_chi2ndf= new TH2F("hptH3L_chi2ndf","hptH3L_chi2topo;p_{T};chi2ndf",100,0,5,120,0,15);
+  TH2F* hptH3L_chi2ndf= new TH2F("hptH3L_chi2ndf","hptH3L_chi2topo;p_{T};chi2ndf",100,0,5,100,0,10);
   hptH3L_chi2ndf->Sumw2();
   TH2F* hptH3L_dDca= new TH2F("hptH3L_dDca","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
   hptH3L_dDca->Sumw2();
@@ -316,9 +343,10 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_dpDca->Sumw2();
 
   //signal region
+
   TH2F* hptH3L_lSig= new TH2F("hptH3L_lSig","hptH3L_l;p_{T};l",100,0,5,500,0,100);
   hptH3L_lSig->Sumw2();
-  TH2F* hptH3L_ldlSig = new TH2F("hptH3L_ldlSig","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
+  TH2F* hptH3L_ldlSig = new TH2F("hptH3L_ldlSig","hptH3L_ldl;p_{T};ldl",100,0,5,250,0,50);
   hptH3L_ldlSig->Sumw2();
   TH2F* hptH3L_dchi2primSig = new TH2F("hptH3L_dchi2primSig","hptH3L_dchi2pri;p_{T};d chi2prim",100,0,5,100,0,20);
   hptH3L_dchi2primSig->Sumw2();
@@ -328,7 +356,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_pchi2primSig->Sumw2();
   TH2F* hptH3L_chi2topoSig= new TH2F("hptH3L_chi2topoSig","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
   hptH3L_chi2topoSig->Sumw2();
-  TH2F* hptH3L_chi2ndfSig= new TH2F("hptH3L_chi2ndfSig","hptH3L_chi2ndf;p_{T};chi2ndf",100,0,5,120,0,15);
+  TH2F* hptH3L_chi2ndfSig= new TH2F("hptH3L_chi2ndfSig","hptH3L_chi2ndf;p_{T};chi2ndf",100,0,5,100,0,10);
   hptH3L_chi2ndfSig->Sumw2();
   TH2F* hptH3L_dDcaSig= new TH2F("hptH3L_dDcaSig","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
   hptH3L_dDcaSig->Sumw2();
@@ -341,7 +369,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   //SB region
   TH2F* hptH3L_lSBL= new TH2F("hptH3L_lSBL","hptH3L_l;p_{T};l",100,0,5,500,0,100);
   hptH3L_lSBL->Sumw2();
-  TH2F* hptH3L_ldlSBL = new TH2F("hptH3L_ldlSBL","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
+  TH2F* hptH3L_ldlSBL = new TH2F("hptH3L_ldlSBL","hptH3L_ldl;p_{T};ldl",100,0,5,250,0,50);
   hptH3L_ldlSBL->Sumw2();
   TH2F* hptH3L_dchi2primSBL = new TH2F("hptH3L_dchi2primSBL","hptH3L_dchi2pri;p_{T};d chi2prim",100,0,5,100,0,20);
   hptH3L_dchi2primSBL->Sumw2();
@@ -351,7 +379,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_pchi2primSBL->Sumw2();
   TH2F* hptH3L_chi2topoSBL= new TH2F("hptH3L_chi2topoSBL","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
   hptH3L_chi2topoSBL->Sumw2();
-  TH2F* hptH3L_chi2ndfSBL= new TH2F("hptH3L_chi2ndfSBL","hptH3L_chi2ndfSBL;p_{T};chi2ndf",100,0,5,120,0,15);
+  TH2F* hptH3L_chi2ndfSBL= new TH2F("hptH3L_chi2ndfSBL","hptH3L_chi2ndfSBL;p_{T};chi2ndf",100,0,5,100,0,10);
   hptH3L_chi2ndfSBL->Sumw2();
   TH2F* hptH3L_dDcaSBL= new TH2F("hptH3L_dDcaSBL","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
   hptH3L_dDcaSBL->Sumw2();
@@ -364,7 +392,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
 
   TH2F* hptH3L_lSBR= new TH2F("hptH3L_lSBR","hptH3L_l;p_{T};l",100,0,5,500,0,100);
   hptH3L_lSBR->Sumw2();
-  TH2F* hptH3L_ldlSBR = new TH2F("hptH3L_ldlSBR","hptH3L_ldl;p_{T};ldl",100,0,5,100,0,20);
+  TH2F* hptH3L_ldlSBR = new TH2F("hptH3L_ldlSBR","hptH3L_ldl;p_{T};ldl",100,0,5,250,0,50);
   hptH3L_ldlSBR->Sumw2();
   TH2F* hptH3L_dchi2primSBR = new TH2F("hptH3L_dchi2primSBR","hptH3L_dchi2pri;p_{T};d chi2prim",100,0,5,100,0,20);
   hptH3L_dchi2primSBR->Sumw2();
@@ -374,7 +402,7 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_pchi2primSBR->Sumw2();
   TH2F* hptH3L_chi2topoSBR= new TH2F("hptH3L_chi2topoSBR","hptH3L_chi2topo;p_{T};chi2ptopo",100,0,5,100,0,10);
   hptH3L_chi2topoSBR->Sumw2();
-  TH2F* hptH3L_chi2ndfSBR= new TH2F("hptH3L_chi2ndfSBR","hptH3L_chi2ndfSBR;p_{T};chi2ndf",100,0,5,120,0,15);
+  TH2F* hptH3L_chi2ndfSBR= new TH2F("hptH3L_chi2ndfSBR","hptH3L_chi2ndfSBR;p_{T};chi2ndf",100,0,5,100,0,10);
   hptH3L_chi2ndfSBR->Sumw2();
   TH2F* hptH3L_dDcaSBR= new TH2F("hptH3L_dDcaSBR","hptH3L_dDca;p_{T};dDca",100,0,5,100,0,5);
   hptH3L_dDcaSBR->Sumw2();
@@ -385,9 +413,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   TH2F* hptH3L_dpDcaSBR = new TH2F("hptH3L_dpDcaSBR","hptH3L_dpDca;p_{T};dpDca",100,0,5,80,0,4);
   hptH3L_dpDcaSBR->Sumw2();
 
-
   TH2F* hptH3L_ppimass = new TH2F("hptH3L_ppimass","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
-  hptppimass->Sumw2();
+  hptH3L_ppimass->Sumw2();
   TH2F* hptH3L_ppichi2prim= new TH2F("hptH3L_ppichi2prim","hptH3L_ppichi2prim;p_{T};(p#pi) #chi^{2}_{prim}",100,0,5,50,0,40);
   hptH3L_ppichi2prim->Sumw2();
   TH2F* hptH3L_ppil= new TH2F("hptH3L_ppil","hptH3L_ppil;p_{T};(p#pi) l",100,0,5,50,0,40);
@@ -396,6 +423,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_ppildl->Sumw2();
   TH2F* hptH3L_ppichi2ndf= new TH2F("hptH3L_ppichi2ndf","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
   hptH3L_ppichi2ndf->Sumw2();
+  TH2F* hptH3L_ppi_d_DCA= new TH2F("hptH3L_ppi_d_DCA","hptH3L_ppi_d_DCA;p_{T};(p#pi-d) DCA",100,0,5,80,0,8);
+  hptH3L_ppi_d_DCA->Sumw2();
 
   TH2F* hptH3L_ppimassSBL = new TH2F("hptH3L_ppimassSBL","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
   hptH3L_ppimassSBL->Sumw2();
@@ -407,6 +436,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_ppildlSBL->Sumw2();
   TH2F* hptH3L_ppichi2ndfSBL= new TH2F("hptH3L_ppichi2ndfSBL","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
   hptH3L_ppichi2ndfSBL->Sumw2();
+  TH2F* hptH3L_ppi_d_DCASBL= new TH2F("hptH3L_ppi_d_DCASBL","hptH3L_ppi_d_DCA;p_{T};(p#pi-d) DCA",100,0,5,80,0,8);
+  hptH3L_ppi_d_DCASBL->Sumw2();
 
   TH2F* hptH3L_ppimassSBR = new TH2F("hptH3L_ppimassSBR","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
   hptH3L_ppimassSBR->Sumw2();
@@ -418,6 +449,8 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_ppildlSBR->Sumw2();
   TH2F* hptH3L_ppichi2ndfSBR= new TH2F("hptH3L_ppichi2ndfSBR","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
   hptH3L_ppichi2ndfSBR->Sumw2();
+  TH2F* hptH3L_ppi_d_DCASBR= new TH2F("hptH3L_ppi_d_DCASBR","hptH3L_ppi_d_DCA;p_{T};(p#pi-d) DCA",100,0,5,80,0,8);
+  hptH3L_ppi_d_DCASBR->Sumw2();
 
   TH2F* hptH3L_ppimassSig = new TH2F("hptH3L_ppimassSig","hptH3L_ppimass;p_{T};mass",100,0,5,400,1.05,1.15);
   hptH3L_ppimassSig->Sumw2();
@@ -429,9 +462,48 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   hptH3L_ppildlSig->Sumw2();
   TH2F* hptH3L_ppichi2ndfSig= new TH2F("hptH3L_ppichi2ndfSig","hptH3L_ppichi2ndf;p_{T};(p#pi) #chi^{2}_{ndf}",100,0,5,80,0,0.5);
   hptH3L_ppichi2ndfSig->Sumw2();
+  TH2F* hptH3L_ppi_d_DCASig= new TH2F("hptH3L_ppi_d_DCASig","hptH3L_ppi_d_DCASig;p_{T};(p#pi-d) DCA",100,0,5,80,0,8);
+  hptH3L_ppi_d_DCASig->Sumw2();
 
+  TH3F* h3H3L_lSBL= new TH3F("h3H3L_lSBL","hptH3L_l;p_{T};l;y",100,0,5,500,0,100,60, -1.2, 0);
+  h3H3L_lSBL->Sumw2();
+  TH3F* h3H3L_ldlSBL = new TH3F("h3H3L_ldlSBL","hptH3L_ldl;p_{T};ldl;y",100,0,5,250,0,50, 60, -1.2, 0);
+  h3H3L_ldlSBL->Sumw2();
+  TH3F* h3H3L_chi2topoSBL= new TH3F("h3H3L_chi2topoSBL","hptH3L_chi2topo;p_{T};chi2ptopo;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2topoSBL->Sumw2();
+  TH3F* h3H3L_chi2ndfSBL= new TH3F("h3H3L_chi2ndfSBL","hptH3L_chi2ndfSBL;p_{T};chi2ndf;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2ndfSBL->Sumw2();
 
+  TH3F* h3H3L_lSBR= new TH3F("h3H3L_lSBR","hptH3L_l;p_{T};l;y",100,0,5,500,0,100,60, -1.2, 0);
+  h3H3L_lSBR->Sumw2();
+  TH3F* h3H3L_ldlSBR = new TH3F("h3H3L_ldlSBR","hptH3L_ldl;p_{T};ldl;y",100,0,5,250,0,50, 60, -1.2, 0);
+  h3H3L_ldlSBR->Sumw2();
+  TH3F* h3H3L_chi2topoSBR= new TH3F("h3H3L_chi2topoSBR","hptH3L_chi2topo;p_{T};chi2ptopo;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2topoSBR->Sumw2();
+  TH3F* h3H3L_chi2ndfSBR= new TH3F("h3H3L_chi2ndfSBR","hptH3L_chi2ndfSBR;p_{T};chi2ndf;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2ndfSBR->Sumw2();
 
+  TH3F* h3H3L_lSig= new TH3F("h3H3L_lSig","hptH3L_l;p_{T};l;y",100,0,5,500,0,100, 60, -1.2, 0);
+  h3H3L_lSig->Sumw2();
+  TH3F* h3H3L_ldlSig = new TH3F("h3H3L_ldlSig","hptH3L_ldl;p_{T};ldl;y",100,0,5,250,0,50,60, -1.2, 0);
+  h3H3L_ldlSig->Sumw2();
+  TH3F* h3H3L_chi2ndfSig= new TH3F("h3H3L_chi2ndfSig","hptH3L_chi2ndf;p_{T};chi2ndf;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2ndfSig->Sumw2();
+  TH3F* h3H3L_chi2topoSig= new TH3F("h3H3L_chi2topoSig","hptH3L_chi2topo;p_{T};chi2ptopo;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2topoSig->Sumw2();
+
+  TH3F* h3H3L_l= new TH3F("h3H3L_l","hptH3L_l;p_{T};l;y",100,0,5,500,0,100, 60, -1.2, 0);
+  h3H3L_l->Sumw2();
+  TH3F* h3H3L_ldl = new TH3F("h3H3L_ldl","hptH3L_ldl;p_{T};ldl;y",100,0,5,250,0,50,60, -1.2, 0);
+  h3H3L_ldl->Sumw2();
+  TH3F* h3H3L_chi2ndf= new TH3F("h3H3L_chi2ndf","hptH3L_chi2ndf;p_{T};chi2ndf;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2ndf->Sumw2();
+  TH3F* h3H3L_chi2topo= new TH3F("h3H3L_chi2topo","hptH3L_chi2topo;p_{T};chi2ptopo;y",100,0,5,100,0,10, 60, -1.2, 0);
+  h3H3L_chi2topo->Sumw2();
+
+  TH3F* hH3LPPiMassPt = new TH3F("hH3LPPiMassPt","hH3LPPiMassPt;p_{T};H3L mass;PiP",100,0,5,200,2.95,3.05, 100, -2, 0);
+  // TH3F* hH3LPPiMassPt = new TH3F("hH3LPPiMassPt","hH3LPPiMassPt;p_{T};H3L mass;PiP",100,0,5,200,2.95,3.05, 200, 0, 6);
+  hH3LPPiMassPt->Sumw2();
   ////////////////////////////////////////////////////////////////
 
   Long64_t n_Entries = htriton3_tree.GetEntries();
@@ -440,10 +512,12 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
   for (int i=0;i<n_Entries;i++)
   {
     htriton3_tree.GetEntry(i); 
-    if (i%10000==0) cout <<"read "<<i<<" events!" << endl;
+    if (i%100000==0) cout <<"read "<<i<<" events!" << endl;
     if ( !(bismc == mcState)  ) continue;
     if (bisMix!=isMix) continue;
-    if (cent9<=1 || cent9>8) continue; //remove 60-80%
+    // if (cent9<=2 || cent9>8) continue; //remove 60-80%
+    if (cent9<centLow || cent9>centHigh) continue; //remove 60-80%
+    // if (cent9<=5 || cent9>8) continue; //remove 20-80%
 
     double ptweight = 1; //reserved
     double rapweight = 1;
@@ -466,12 +540,28 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       }
       else if (mode==1 && mcState==1) 
         mcptc.SetXYZM(bmcpx,bmcpy,bmcpz,mass_ld);
-      double bmcrap = mcptc.Rapidity() - ycm;
+      double bmcrap = -1*(mcptc.Rapidity() - ycm);
+      // cout<<bmcrap<<" ";
       /* hPhase->Fill(bmcrap, mcptc.Pt()); */
       double mcMotherPt = mcptc.Pt();
-      rapweight = t_quadr->Eval(bmcrap);
-      mcweight = 1./g_pt_fine_in->GetBinContent(g_pt_fine_in->FindBin(bmcrap,mcMotherPt));
-      if (mode==0 && mcState ==1) ptweight = bolt1->Eval(mcMotherPt);
+      // rapweight = t_quadr->Eval(bmcrap);
+      // if (rapweight<0) rapweight = 0;
+      rapweight = 1;
+      // mcweight = 1./g_pt_fine_in->GetBinContent(g_pt_fine_in->FindBin(bmcrap,mcMotherPt));
+      double mccounts;
+      if (mcState==-20) mccounts  = g_pt_fine_in->GetBinContent(g_pt_fine_in->GetXaxis()->FindBin(-1*bmcrap),g_pt_fine_in->GetYaxis()->FindBin(mcMotherPt));
+      else if (mcState==1) mccounts =  g_pt_fine_in->GetBinContent(g_pt_fine_in->GetXaxis()->FindBin(bmcrap),g_pt_fine_in->GetYaxis()->FindBin(mcMotherPt));
+
+      if (mccounts>0) mcweight = 1./mccounts; 
+
+      // if (mode==0 && mcState ==1) ptweight = bolt1->Eval(mcMotherPt);
+      if (mode==0 && mcState ==1) {
+        // ptweight = fH3Ldydpt[1]->Eval(mcMotherPt);
+        if (bmcrap<0 && bmcrap>=-0.25) ptweight = fH3Ldydpt[0]->Eval(mcMotherPt);
+        if (bmcrap<-0.25 && bmcrap>=-0.5) ptweight = fH3Ldydpt[1]->Eval(mcMotherPt);
+        if (bmcrap<-0.5 && bmcrap>=-0.75) ptweight = fH3Ldydpt[2]->Eval(mcMotherPt);
+        if (bmcrap<-0.75) ptweight = fH3Ldydpt[2]->Eval(mcMotherPt);
+      }
       else if (mode==1 || mcState==-20){
         if (bmcrap<-0.7){ ptweight = levyfit8->Eval(mcMotherPt); }
         else if (bmcrap<-0.5){ ptweight = levyfit7->Eval(mcMotherPt); }
@@ -485,11 +575,23 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       }
     }
     /* cout << mcMotherPt <<" "<<mcweight<<" "<<ptweight<<" "<<rapweight<<endl; */
-    gweight=reweight; //centrality weight
-    // gweight=1; //centrality weight
+    // gweight=reweight; //centrality weight
+    gweight=1; //centrality weight
 
     double weight = ptweight*rapweight*mcweight*gweight;
-    if (mcState==0) weight = reweight; 
+    if (mode==0 && mcState==1) // PID efficiency
+    {
+      //pion ~1 (cut on 3)
+      //deuteron
+      double p_d = sqrt(bdpx*bdpx+bdpy*bdpy+bdpz*bdpz);
+      double p_p = sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy+bprotonpz*bprotonpz);
+      if (p_d>1.6 && p_d<3)
+        weight*=0.97849193;       
+      if (p_p>1.6 && p_p<3)
+        weight*=0.9725; 
+    } 
+    // double weight = 1;
+    if (mcState==0) weight = gweight; 
     // if (mcState==0) weight = 1; 
     double ppi_pt = sqrt(bpx*bpx+bpy*bpy); // lambda case 
     if (mode==0) ppi_pt= sqrt(bpionpx*bpionpx+bpionpy*bpionpy+bprotonpy*bprotonpy+bprotonpx*bprotonpx);
@@ -503,16 +605,16 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     //compare H3L->ppi and Lambda->ppi
     if ((mode==0 && bismc==mcState) || (mode==1 && bismc==mcState) ){ 
       // cout << reweight << " "<<ppi_pt<< " "<<dca_pion<<" "<<chi2primary_proton<<endl;
-      hptpdca->Fill( ppi_pt,dca_proton, weight);
-      hptpidca->Fill( ppi_pt,dca_pion, weight);
-      hptsumdca->Fill( ppi_pt,dca_pion+dca_proton, weight);
-      hptpchi2prim->Fill( ppi_pt,chi2primary_proton, weight);
-      hptpichi2prim->Fill( ppi_pt,chi2primary_pi, weight);
-      hptppichi2ndf->Fill( ppi_pt, v_01_chi2ndf, weight);
-      hptppichi2prim->Fill( ppi_pt, v_01_chi2primary, weight);
-      hptppil->Fill( ppi_pt, v_lambda_l_0, weight);
-      hptppildl->Fill( ppi_pt, v_lambda_ldl_0, weight);
-      hptppimass->Fill( ppi_pt, mass_01, weight);
+      // hptpdca->Fill( ppi_pt,dca_proton, weight);
+      // hptpidca->Fill( ppi_pt,dca_pion, weight);
+      // hptsumdca->Fill( ppi_pt,dca_pion+dca_proton, weight);
+      // hptpchi2prim->Fill( ppi_pt,chi2primary_proton, weight);
+      // hptpichi2prim->Fill( ppi_pt,chi2primary_pi, weight);
+      // hptppichi2ndf->Fill( ppi_pt, v_01_chi2ndf, weight);
+      // hptppichi2prim->Fill( ppi_pt, v_01_chi2primary, weight);
+      // hptppil->Fill( ppi_pt, v_lambda_l_0, weight);
+      // hptppildl->Fill( ppi_pt, v_lambda_ldl_0, weight);
+      // hptppimass->Fill( ppi_pt, mass_01, weight);
       if (mode==0) 
       {
 
@@ -527,38 +629,90 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
       TLorentzVector H3L;
       H3L.SetXYZM(bpx, bpy, bpz, bparticlemass );
       double H3LpT = sqrt(bpx*bpx+bpy*bpy);
+      double H3Ly = -1*(H3L.Rapidity()-ycm);
+      TLorentzVector mcptc;
+      mcptc.SetXYZM(bmcpx,bmcpy,bmcpz,mass_ht);
+      double bmcrap = -1* (mcptc.Rapidity() - ycm);
       double p_pt = sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy);
+      double d_pt = sqrt(bdpx*bdpx+bdpy*bdpy);
       double p_p = sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy+bprotonpz*bprotonpz);
       double p_d = sqrt(bdpx*bdpx+bdpy*bdpy+bdpz*bdpz);
       double pi_pt = sqrt(bpionpx*bpionpx+bpionpy*bpionpy);
+      TLorentzVector Lambda, pi, p;
+      pi.SetXYZM(bpionpx, bpionpy, bpionpz, 0.134);
+      p.SetXYZM(bprotonpx, bprotonpy, bprotonpz, 0.93838);
+      Lambda = p+pi;
 
       /* weight=1; */
-      // bool passTopoCuts=1;
-      // bool Topo_l =        1;
-      // bool Topo_ldl =      1;
-      // bool Topo_chi2topo = 1;
-      // bool Topo_chi2ndf =  1;
-      // bool Topo_chi2d=     1;
-      // bool Topo_chi2pi =   1;
-      // bool Topo_chi2p =    1;
 
-      bool passTopoCuts =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && 
-                           fabs(p_d)<3 && fabs(p_p)<2 &&  
-                           ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5;
-      bool Topo_l =        ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2;
-      bool Topo_ldl =      ht_l>8  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2;
-      bool Topo_chi2topo = ht_l >8 && ht_ldl>5   && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2;
-      bool Topo_chi2ndf =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 &&  chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2;
-      bool Topo_chi2d=     ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2;
-      bool Topo_chi2pi =   ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2;
-      bool Topo_chi2p =    ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && fabs(p_d)<3 && fabs(p_p)<2;
-      // bool passTopoCuts =  ht_l >1 && ht_ldl>1  && ht_chi2topo<20 && ht_chi2ndf<20 ;
+      // bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10 && v_lambda_ldl_0>3 && v_lambda_l_0>1 && dca_deuteron<1;
+      // bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10  && dca_deuteron<1 && pi_pt>0.15 && p_pt>0.15 && d_pt>0.15;
+      // bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10  && dca_deuteron<1 && pi_pt>0.1 && p_pt>0.1 && d_pt>0.1;
+      // bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10 && pi_pt>0.1 && p_pt>0.1 && d_pt>0.1;
+      // bool passTopoCuts =  MERecCut;
+      // bool Topo_l =        MERecCut;
+      // bool Topo_ldl =      MERecCut;
+      // bool Topo_chi2topo = MERecCut;
+      // bool Topo_chi2ndf =  MERecCut;
+      // bool Topo_chi2d=     MERecCut;
+      // bool Topo_chi2pi =   MERecCut;
+      // bool Topo_chi2p =    MERecCut;
+
+      // bool dcaCut = dca_proton<3 && dca_deuteron<1;
+      // bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10 && dcaCut ;
+      //
+      // bool passTopoCuts =  ht_l >8 && ht_ldl>5 && ht_chi2topo<3 && fabs(p_d)<3 && fabs(p_p)<2 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5  && MERecCut;
+      // bool Topo_l = ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_ldl =      ht_l>8  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2topo = ht_l >8 && ht_ldl>5   && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2ndf =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 &&  chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2d=     ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2pi =   ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2p =    ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5  && chi2primary_d>0 && chi2primary_pi>10 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      //
+      bool dcaCut = pi_pt>0.1 && p_pt>0.1 && d_pt>0.1;
+      bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10 && dcaCut;
+      bool passTopoCuts =  ht_l >8 && ht_ldl>5 && ht_chi2topo<3 && fabs(p_d)<3 && fabs(p_p)<2 && ht_chi2ndf<3.5 && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && MERecCut;
+      bool Topo_l =  ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<3.5 && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      bool Topo_ldl = ht_l>8  && ht_chi2topo<3 && ht_chi2ndf<3.5 && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      bool Topo_chi2topo = ht_l >8 && ht_ldl>5   && ht_chi2ndf<3.5 && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      bool Topo_chi2ndf =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      bool Topo_chi2d=  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<2  && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      bool Topo_chi2pi =   ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<2  && chi2primary_d>0 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      bool Topo_chi2p =    ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf<2  && chi2primary_d>0 && chi2primary_pi>10 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+
+      // bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10;
+      // test secondary particles
+      // bool passTopoCuts =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && fabs(p_d)<3 && fabs(p_p)<2 && ht_chi2ndf>5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && MERecCut;
+      // bool Topo_l =        ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf>5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_ldl =      ht_l>8  && ht_chi2topo<3 && ht_chi2ndf>5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2topo = ht_l >8 && ht_ldl>5   && ht_chi2ndf>5  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2ndf =  ht_l >8 && ht_ldl>5  && ht_chi2topo<3 &&  chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2d=     ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf>5  && chi2primary_pi>10 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2pi =   ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf>5  && chi2primary_d>0 && chi2primary_proton>5 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      // bool Topo_chi2p =    ht_l >8 && ht_ldl>5  && ht_chi2topo<3 && ht_chi2ndf>5  && chi2primary_d>0 && chi2primary_pi>10 && fabs(p_d)<3 && fabs(p_p)<2 && MERecCut;
+      //
+
       //all require them match topo cuts
       // full region
-      if (Topo_chi2topo) hptH3L_chi2topo ->Fill( H3LpT, ht_chi2topo, weight);
-      if (Topo_chi2ndf) hptH3L_chi2ndf ->Fill( H3LpT, ht_chi2ndf, weight);
-      if (Topo_l) hptH3L_l ->Fill( H3LpT, ht_l, weight);
-      if (Topo_ldl) hptH3L_ldl ->Fill( H3LpT, ht_ldl, weight);
+     if (bparticlemass>2.97 && bparticlemass<3.02)
+     {
+      if (Topo_chi2topo) {
+        hptH3L_chi2topo ->Fill( H3LpT, ht_chi2topo, weight);
+        h3H3L_chi2topo ->Fill( H3LpT, ht_chi2topo, H3Ly, weight);
+      }
+      if (Topo_chi2ndf) {
+        hptH3L_chi2ndf ->Fill( H3LpT, ht_chi2ndf, weight);
+        h3H3L_chi2ndf ->Fill( H3LpT, ht_chi2ndf, H3Ly, weight);
+      }
+      if (Topo_l) {
+        hptH3L_l ->Fill( H3LpT, ht_l, weight);
+        h3H3L_l ->Fill( H3LpT, ht_l, H3Ly, weight);
+      }
+      if (Topo_ldl) {
+        hptH3L_ldl ->Fill( H3LpT, ht_ldl, weight);
+        h3H3L_ldl ->Fill( H3LpT, ht_ldl, H3Ly, weight);
+      }
 
       if (Topo_chi2p) hptH3L_pchi2prim ->Fill( H3LpT, chi2primary_proton, weight);
       if (Topo_chi2pi) hptH3L_pichi2prim ->Fill( H3LpT, chi2primary_pi, weight);
@@ -568,32 +722,96 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
         hptH3L_pDca ->Fill( H3LpT, dca_proton, weight);
         hptH3L_piDca ->Fill( H3LpT, dca_pion, weight);
         hptH3L_dpDca ->Fill( H3LpT, v_12_dca, weight);
+        hptH3L_ppi_d_DCA->Fill( H3LpT, v_012_dca, weight);
+        hptH3L_ppimass->Fill( H3LpT, mass_01, weight);
+        hptH3L_ppichi2ndf->Fill( H3LpT, v_01_chi2ndf, weight);
+        hptH3L_ppichi2prim->Fill( H3LpT, v_01_chi2primary, weight);
+        hptH3L_ppil->Fill( H3LpT, v_lambda_l_0, weight);
+        hptH3L_ppildl->Fill( H3LpT, v_lambda_ldl_0, weight);
+        hptH3L_ppi_d_DCA->Fill( H3LpT, v_012_dca, weight);
       }
+    }
 
       //look at sideband region
-      if ((bparticlemass<2.98 && bparticlemass>2.97 ) || ( bparticlemass<3.02 && bparticlemass > 3. ))
+      if ((bparticlemass<2.98 && bparticlemass>2.97 ) )
       {
-        if (Topo_chi2topo)  hptH3L_chi2topoSB->Fill( H3LpT, ht_chi2topo, weight);
-        if (Topo_chi2ndf) hptH3L_chi2ndfSB->Fill( H3LpT, ht_chi2ndf, weight);
-        if (Topo_l) hptH3L_lSB->Fill( H3LpT, ht_l, weight);
-        if (Topo_ldl) hptH3L_ldlSB->Fill( H3LpT, ht_ldl, weight);
+        if (Topo_chi2topo)  {
+          h3H3L_chi2topoSBL->Fill( H3LpT, ht_chi2topo, H3Ly, weight);
+          hptH3L_chi2topoSBL->Fill( H3LpT, ht_chi2topo, weight);
+        }
+        if (Topo_chi2ndf) {
+          hptH3L_chi2ndfSBL->Fill( H3LpT, ht_chi2ndf, weight);
+          h3H3L_chi2ndfSBL->Fill( H3LpT, ht_chi2ndf, H3Ly, weight);
+        }
+        if (Topo_l) {
+          hptH3L_lSBL->Fill( H3LpT, ht_l, weight);
+          h3H3L_lSBL->Fill( H3LpT, ht_l, H3Ly, weight);
+        }
+        if (Topo_ldl) {
+          hptH3L_ldlSBL->Fill( H3LpT, ht_ldl, weight);
+          h3H3L_ldlSBL->Fill( H3LpT, ht_ldl, H3Ly, weight);
+        }
 
-        if (Topo_chi2p) hptH3L_pchi2primSB->Fill( H3LpT, chi2primary_proton, weight);
-        if (Topo_chi2pi) hptH3L_pichi2primSB->Fill( H3LpT, chi2primary_pi, weight);
-        if (Topo_chi2d) hptH3L_dchi2primSB->Fill( H3LpT, chi2primary_d, weight);
+        if (Topo_chi2p) hptH3L_pchi2primSBL->Fill( H3LpT, chi2primary_proton, weight);
+        if (Topo_chi2pi) hptH3L_pichi2primSBL->Fill( H3LpT, chi2primary_pi, weight);
+        if (Topo_chi2d) hptH3L_dchi2primSBL->Fill( H3LpT, chi2primary_d, weight);
         if (passTopoCuts) {
-          hptH3L_dDcaSB->Fill( H3LpT, dca_deuteron, weight);
-          hptH3L_pDcaSB->Fill( H3LpT, dca_proton, weight);
-          hptH3L_piDcaSB->Fill( H3LpT, dca_pion, weight);
-          hptH3L_dpDcaSB->Fill( H3LpT, v_12_dca, weight);
+          hptH3L_dDcaSBL->Fill( H3LpT, dca_deuteron, weight);
+          hptH3L_pDcaSBL->Fill( H3LpT, dca_proton, weight);
+          hptH3L_piDcaSBL->Fill( H3LpT, dca_pion, weight);
+          hptH3L_dpDcaSBL->Fill( H3LpT, v_12_dca, weight);
+        hptH3L_ppi_d_DCASBL->Fill( H3LpT, v_012_dca, weight);
         }
       }
-       if (bparticlemass>2.989 && bparticlemass<2.995)
+      else if (( bparticlemass<3.02 && bparticlemass > 3. ))
       {
-        if (Topo_chi2topo) hptH3L_chi2topoSig->Fill( H3LpT, ht_chi2topo, weight);
-        if (Topo_chi2ndf) hptH3L_chi2ndfSig->Fill( H3LpT, ht_chi2ndf, weight);
-        if (Topo_l) hptH3L_lSig->Fill( H3LpT, ht_l, weight);
-        if (Topo_ldl) hptH3L_ldlSig->Fill( H3LpT, ht_ldl, weight);
+        if (Topo_chi2topo)  {
+          hptH3L_chi2topoSBR->Fill( H3LpT, ht_chi2topo, weight);
+          h3H3L_chi2topoSBR->Fill( H3LpT, ht_chi2topo, H3Ly, weight);
+        }
+        if (Topo_chi2ndf) {
+          hptH3L_chi2ndfSBR->Fill( H3LpT, ht_chi2ndf, weight);
+          h3H3L_chi2ndfSBR->Fill( H3LpT, ht_chi2ndf, H3Ly, weight);
+        }
+        if (Topo_l) {
+          hptH3L_lSBR->Fill( H3LpT, ht_l, weight);
+          h3H3L_lSBR->Fill( H3LpT, ht_l, H3Ly, weight);
+        }
+        if (Topo_ldl) {
+          hptH3L_ldlSBR->Fill( H3LpT, ht_ldl, weight);
+          h3H3L_ldlSBR->Fill( H3LpT, ht_ldl, H3Ly, weight);
+        }
+
+        if (Topo_chi2p) hptH3L_pchi2primSBR->Fill( H3LpT, chi2primary_proton, weight);
+        if (Topo_chi2pi) hptH3L_pichi2primSBR->Fill( H3LpT, chi2primary_pi, weight);
+        if (Topo_chi2d) hptH3L_dchi2primSBR->Fill( H3LpT, chi2primary_d, weight);
+        if (passTopoCuts) {
+          hptH3L_dDcaSBR->Fill( H3LpT, dca_deuteron, weight);
+          hptH3L_pDcaSBR->Fill( H3LpT, dca_proton, weight);
+          hptH3L_piDcaSBR->Fill( H3LpT, dca_pion, weight);
+          hptH3L_dpDcaSBR->Fill( H3LpT, v_12_dca, weight);
+          hptH3L_ppi_d_DCASBR->Fill( H3LpT, v_012_dca, weight);
+        }
+      }
+      if (bparticlemass>2.989 && bparticlemass<2.995)
+      {
+        if (Topo_chi2topo) {
+          hptH3L_chi2topoSig->Fill( H3LpT, ht_chi2topo, weight);
+          h3H3L_chi2topoSig->Fill( H3LpT, ht_chi2topo,H3Ly, weight);
+        }
+        if (Topo_chi2ndf) {
+          hptH3L_chi2ndfSig->Fill( H3LpT, ht_chi2ndf, weight);
+          h3H3L_chi2ndfSig->Fill( H3LpT, ht_chi2ndf, H3Ly, weight);
+        }
+        if (Topo_l) {
+          hptH3L_lSig->Fill( H3LpT, ht_l, weight);
+          h3H3L_lSig->Fill( H3LpT, ht_l, H3Ly, weight);
+        }
+
+        if (Topo_ldl) {
+          hptH3L_ldlSig->Fill( H3LpT, ht_ldl, weight);
+          h3H3L_ldlSig->Fill( H3LpT, ht_ldl,H3Ly,  weight);
+        }
 
         if (Topo_chi2p) hptH3L_pchi2primSig->Fill( H3LpT, chi2primary_proton, weight);
         if (Topo_chi2pi) hptH3L_pichi2primSig->Fill( H3LpT, chi2primary_pi, weight);
@@ -603,14 +821,24 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
           hptH3L_pDcaSig->Fill( H3LpT, dca_proton, weight);
           hptH3L_piDcaSig->Fill( H3LpT, dca_pion, weight);
           hptH3L_dpDcaSig->Fill( H3LpT, v_12_dca, weight);
+          hptH3L_ppi_d_DCASig->Fill( H3LpT, v_012_dca, weight);
         }
       }
       if ( passTopoCuts) 
       {
         hptH3Lmass->Fill(H3LpT, bparticlemass, weight); 
-        hH3LMassPtY->Fill(H3LpT, bparticlemass, H3L.Rapidity(), weight);
+
+        hH3LMassPtY->Fill(H3LpT, bparticlemass, bmcrap , weight);
+        double cuts[7]={0.2,0.6,1,1.5,2,2.5,3};
+         for (int i=0;i<7;i++) {
+           if (ht_chi2topo<cuts[i])
+              hH3LMassPtYCut[i]->Fill(H3LpT, bparticlemass, H3Ly, weight);
+         }
+        // hH3LMassPtY->Fill(H3LpT, bparticlemass, H3Ly, weight);
+        if (fabs(bmcrap)<1) hH3LMassPtCent->Fill(H3LpT, bparticlemass, cent9, weight);
         if (cent9<=7 && cent9 >=4 && fabs(p_d)<3 && fabs(p_p)<2  ) 
-          hH3LMassPtY_5_40->Fill(H3LpT, bparticlemass, H3L.Rapidity(), weight);
+          hH3LMassPtY_5_40->Fill(H3LpT, bparticlemass, bmcrap, weight);
+          // hH3LMassPtY_5_40->Fill(H3LpT, bparticlemass, H3Ly, weight);
         if (bparticlemass<2.995  && bparticlemass >2.989) 
         {
           // hptppimassSig->Fill( ppi_pt, mass_01, weight);
@@ -623,6 +851,11 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
           // hptppichi2primSig->Fill( ppi_pt, v_01_chi2primary, weight);
           // hptppilSig->Fill( ppi_pt, v_lambda_l_0, weight);
           // hptppildlSig->Fill( ppi_pt, v_lambda_ldl_0, weight);
+          hptH3L_ppimassSig->Fill( H3LpT, mass_01, weight);
+          hptH3L_ppichi2ndfSig->Fill( H3LpT, v_01_chi2ndf, weight);
+          hptH3L_ppichi2primSig->Fill( H3LpT, v_01_chi2primary, weight);
+          hptH3L_ppilSig->Fill( H3LpT, v_lambda_l_0, weight);
+          hptH3L_ppildlSig->Fill( H3LpT, v_lambda_ldl_0, weight);
         }
         if ( ( bparticlemass<3.02 && bparticlemass > 3. ))
         {
@@ -636,13 +869,25 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
           // hptppichi2primSB->Fill( ppi_pt, v_01_chi2primary, weight);
           // hptppilSB->Fill( ppi_pt, v_lambda_l_0, weight);
           // hptppildlSB->Fill( ppi_pt, v_lambda_ldl_0, weight);
+          hptH3L_ppimassSBR->Fill( H3LpT, mass_01, weight);
+          hptH3L_ppichi2ndfSBR->Fill( H3LpT, v_01_chi2ndf, weight);
+          hptH3L_ppichi2primSBR->Fill( H3LpT, v_01_chi2primary, weight);
+          hptH3L_ppilSBR->Fill( H3LpT, v_lambda_l_0, weight);
+          hptH3L_ppildlSBR->Fill( H3LpT, v_lambda_ldl_0, weight);
         }
         else if ((bparticlemass<2.98 && bparticlemass>2.97 ) )
         {
+          hptH3L_ppimassSBL->Fill( H3LpT, mass_01, weight);
+          hptH3L_ppichi2ndfSBL->Fill( H3LpT, v_01_chi2ndf, weight);
+          hptH3L_ppichi2primSBL->Fill( H3LpT, v_01_chi2primary, weight);
+          hptH3L_ppilSBL->Fill( H3LpT, v_lambda_l_0, weight);
+          hptH3L_ppildlSBL->Fill( H3LpT, v_lambda_ldl_0, weight);
+          hptH3L_ppi_d_DCASBL->Fill( H3LpT, v_012_dca, weight);
         }
         hH3LptProtonPt->Fill(H3LpT, p_pt , weight );
         hH3LptPionPt->Fill(H3LpT, pi_pt, weight);       
-
+        // hH3LPPiMassPt->Fill(H3LpT, bparticlemass, mass_01, weight);
+        hH3LPPiMassPt->Fill(H3LpT, bparticlemass, Lambda.Pt(), weight);
       }
     }
   }
@@ -679,8 +924,31 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     // hptppilSig->Write();
     // hptppildlSig->Write();
     // //////////////
-    
+ 
+    hptH3L_ppimassSBR->Write(); 
+    hptH3L_ppichi2ndfSBR->Write();
+    hptH3L_ppichi2primSBR->Write();
+    hptH3L_ppilSBR->Write();
+    hptH3L_ppildlSBR->Write();
+    hptH3L_ppi_d_DCASBR->Write();
+
+    hptH3L_ppimassSBL->Write(); 
+    hptH3L_ppichi2ndfSBL->Write();
+    hptH3L_ppichi2primSBL->Write();
+    hptH3L_ppilSBL->Write();
+    hptH3L_ppildlSBL->Write();
+    hptH3L_ppi_d_DCASBL->Write();
+
+    hptH3L_ppimassSig->Write(); 
+    hptH3L_ppichi2ndfSig->Write();
+    hptH3L_ppichi2primSig->Write();
+    hptH3L_ppilSig->Write();
+    hptH3L_ppildlSig->Write();
+    hptH3L_ppi_d_DCASig->Write();
+   
     hH3LMassPtY->Write();
+    for (int i=0;i<7;i++) hH3LMassPtYCut[i]->Write();
+    hH3LMassPtCent->Write();
     hH3LMassPtY_5_40->Write();
     hptH3Lmass->Write();
     hptH3L_dDca->Write();
@@ -695,17 +963,36 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
     hptH3L_pchi2prim->Write();
     hptH3L_dchi2prim->Write();
 
-    hptH3L_dDcaSB->Write();
-    hptH3L_piDcaSB->Write();
-    hptH3L_pDcaSB->Write();
-    hptH3L_dpDcaSB->Write();
-    hptH3L_chi2ndfSB->Write();
-    hptH3L_chi2topoSB->Write();
-    hptH3L_lSB->Write();
-    hptH3L_ldlSB->Write();
-    hptH3L_pichi2primSB->Write();
-    hptH3L_pchi2primSB->Write();
-    hptH3L_dchi2primSB->Write();
+    hptH3L_ppimass->Write(); 
+    hptH3L_ppichi2ndf->Write();
+    hptH3L_ppichi2prim->Write();
+    hptH3L_ppil->Write();
+    hptH3L_ppildl->Write();
+    hptH3L_ppi_d_DCA->Write();
+
+    hptH3L_dDcaSBR->Write();
+    hptH3L_piDcaSBR->Write();
+    hptH3L_pDcaSBR->Write();
+    hptH3L_dpDcaSBR->Write();
+    hptH3L_chi2ndfSBR->Write();
+    hptH3L_chi2topoSBR->Write();
+    hptH3L_lSBR->Write();
+    hptH3L_ldlSBR->Write();
+    hptH3L_pichi2primSBR->Write();
+    hptH3L_pchi2primSBR->Write();
+    hptH3L_dchi2primSBR->Write();
+
+    hptH3L_dDcaSBL->Write();
+    hptH3L_piDcaSBL->Write();
+    hptH3L_pDcaSBL->Write();
+    hptH3L_dpDcaSBL->Write();
+    hptH3L_chi2ndfSBL->Write();
+    hptH3L_chi2topoSBL->Write();
+    hptH3L_lSBL->Write();
+    hptH3L_ldlSBL->Write();
+    hptH3L_pichi2primSBL->Write();
+    hptH3L_pchi2primSBL->Write();
+    hptH3L_dchi2primSBL->Write();
 
     hptH3L_dDcaSig->Write();
     hptH3L_piDcaSig->Write();
@@ -721,6 +1008,28 @@ void readtree(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TS
 
     hH3LptPionPt->Write();
     hH3LptProtonPt->Write();
+    hH3LPPiMassPt->Write();
+
+    h3H3L_chi2ndf->Write();
+    h3H3L_chi2topo->Write();
+    h3H3L_l->Write();
+    h3H3L_ldl->Write();
+
+
+    h3H3L_chi2ndfSig->Write();
+    h3H3L_chi2topoSig->Write();
+    h3H3L_lSig->Write();
+    h3H3L_ldlSig->Write();
+    
+    h3H3L_chi2ndfSBR->Write();
+    h3H3L_chi2topoSBR->Write();
+    h3H3L_lSBR->Write();
+    h3H3L_ldlSBR->Write();
+
+    h3H3L_chi2ndfSBL->Write();
+    h3H3L_chi2topoSBL->Write();
+    h3H3L_lSBL->Write();
+    h3H3L_ldlSBL->Write();
   }
 
   // hrefmult->Write();

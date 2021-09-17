@@ -97,6 +97,13 @@ float v_012_dca;
 float v_01_chi2ndf;
 float v_02_chi2ndf;
 float v_12_chi2ndf;
+float v_12_x;
+float v_12_y;
+float v_12_z;
+float v_02_x;
+float v_02_y;
+float v_02_z;
+
 
   int nhits_deuteron;
   float dca_deuteron; 

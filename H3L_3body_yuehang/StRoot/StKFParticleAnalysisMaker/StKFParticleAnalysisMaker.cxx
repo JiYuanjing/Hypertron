@@ -790,6 +790,17 @@ Int_t StKFParticleAnalysisMaker::Init()
   htriton3_tree->Branch("v_01_pvdca",&v_01_pvdca,"v_01_pvdca/F");
   htriton3_tree->Branch("v_02_pvdca",&v_02_pvdca,"v_02_pvdca/F");
   htriton3_tree->Branch("v_12_pvdca",&v_12_pvdca,"v_12_pvdca/F");
+
+  htriton3_tree->Branch("v_12_z",&v_12_z,"v_12_z/F");
+  htriton3_tree->Branch("v_12_y",&v_12_y,"v_12_y/F");
+  htriton3_tree->Branch("v_12_x",&v_12_x,"v_12_x/F");
+  htriton3_tree->Branch("v_02_z",&v_02_z,"v_02_z/F");
+  htriton3_tree->Branch("v_02_y",&v_02_y,"v_02_y/F");
+  htriton3_tree->Branch("v_02_x",&v_02_x,"v_02_x/F");
+  htriton3_tree->Branch("v_01_z",&v_01_z,"v_01_z/F");
+  htriton3_tree->Branch("v_01_y",&v_01_y,"v_01_y/F");
+  htriton3_tree->Branch("v_01_x",&v_01_x,"v_01_x/F");
+
   htriton3_tree->Branch("ht_bdfvtx",&ht_bdfvtx,"ht_bdfvtx/F");
   htriton3_tree->Branch("ht_bdfvtx2",&ht_bdfvtx2,"ht_bdfvtx2/F");
 
@@ -1122,6 +1133,7 @@ Int_t StKFParticleAnalysisMaker::Make()
 
   Vtxbin = getVtxBin(bVx, bVy, bVz);
   if (Vtxbin<0) isGoodEvent = false;
+  if (bVz>202 || bVz<198 || sqrt((bVy+2)*(bVy+2)+bVx*bVx)>2) isGoodEvent = false;
 
   //cut on refmult and tofmult, trigger, to cut on good event. this cut is only for real analysis!! 
   //when fStoreTmvaNTuples is true, there is no need to cut on these variables
@@ -1196,10 +1208,11 @@ Int_t StKFParticleAnalysisMaker::Make()
 
   if(fRunCentralityAnalysis)
   {
-      centralityBin = Centrality(FXTMult2);
-      cent9 = centralityBin;  
+      cent9  = Centrality(FXTMult2);
+      if (Cuts::nCentralityBins==16) centralityBin = Centrality16(FXTMult2);  
+      else centralityBin = cent9;
       // reweight = mPileupTool->get_centralityWeight();
-      if (centralityBin<0) isGoodEvent= false;
+      if (cent9<0 || cent9 >8) isGoodEvent= false;
       else reweight = FitWeight(FXTMult2);
   }
 
@@ -1237,19 +1250,9 @@ Int_t StKFParticleAnalysisMaker::Make()
     EPbin = 0;
   } 
 
+  // if (fMCMixEvent) EPbin=0; 
+
   if (cent9<0) isGoodEvent=false;
-
-
-  if(isGoodEvent){
-    hvtxgood->Fill(bVz);
-    // hrefmult->Fill(FXTMult2);
-    hrefmult->Fill(countrefmult);
-    // cout << centralityBin<<" "<<reweight<< endl;
-    hCentWt->Fill(centralityBin, reweight);
-    hCent->Fill(centralityBin);
-    // wrefmult->Fill(refmultcor);
-    wrefmult->Fill(countrefmult, reweight);
-  }
 
   //find max global track index
   int maxGBTrackIndex = -1;
@@ -1299,6 +1302,18 @@ Int_t StKFParticleAnalysisMaker::Make()
   //whatever is in Process event skip level
   //  if (isGoodEvent)  cout <<"is good event" << endl;
   //  else cout <<"not good event" << endl;
+
+  if(isGoodEvent){
+    hvtxgood->Fill(bVz);
+    // hrefmult->Fill(FXTMult2);
+    hrefmult->Fill(countrefmult);
+    // cout << centralityBin<<" "<<reweight<< endl;
+    hCentWt->Fill(cent9, reweight);
+    hCent->Fill(cent9);
+    // wrefmult->Fill(refmultcor);
+    wrefmult->Fill(countrefmult, reweight);
+    brefmult = FXTMult2; //change to store this one
+  }
 
   if(isGoodEvent)
   {
@@ -1381,7 +1396,7 @@ Int_t StKFParticleAnalysisMaker::Make()
 
     fStKFParticlePerformanceInterface->SetMCTracks(mcTracks);
     fStKFParticlePerformanceInterface->SetMCIndexes(mcIndices);    
-    fStKFParticlePerformanceInterface->SetCentralityBin(centralityBin);
+    fStKFParticlePerformanceInterface->SetCentralityBin(cent9);
     fStKFParticlePerformanceInterface->SetCentralityWeight(reweight);
     Int_t nevent = 100000;
     fStKFParticlePerformanceInterface->SetPrintEffFrequency(nevent);
@@ -1396,7 +1411,7 @@ Int_t StKFParticleAnalysisMaker::Make()
       //add mixed event for H3L 103004(in KF particle, first recosntruct ppi, then ppi+d), mix ppi and d 
       // add one more branch, bisMix as mixed event tag 
       // if (fMixEvent && fIsPicoAnalysis && isGoodEvent && EPbin>=0 && centralityBin>=0 && centralityBin<9)
-      if (fMixEvent && fIsPicoAnalysis && isGoodEvent && EPbin>=0 && centralityBin>=0 && centralityBin<9 && Vtxbin>=0 && Vtxbin<125)
+      if ( ((fMixEvent && fIsPicoAnalysis) || (!fIsPicoAnalysis && fMCMixEvent)) && isGoodEvent && EPbin>=0 && centralityBin>=0 && centralityBin<Cuts::nCentralityBins && Vtxbin>=0 && Vtxbin<Cuts::nVtxbins )
       {
         StMixEvent newEvent;
         //will make it to be function later
@@ -1461,6 +1476,51 @@ Int_t StKFParticleAnalysisMaker::Make()
             particle.TransportToDecayVertex();
             KFParticle pion = fStKFParticleInterface->GetParticles()[particle.DaughterIds()[0]];
             KFParticle proton = fStKFParticleInterface->GetParticles()[particle.DaughterIds()[1]];
+            
+         //MC MixEvent, currently only works for select MC Lambda   
+         if (fMCMixEvent) 
+         {
+            bool isMcPion = fStKFParticlePerformanceInterface->GetParticle(pion, particle.DaughterIds()[0]);
+            bool isMcProton = fStKFParticlePerformanceInterface->GetParticle(proton, particle.DaughterIds()[1]);
+
+            // bismc=0;
+            //check if the daughter coming from the same vertex
+            if (isMcProton && isMcPion )
+            {
+              int iMcPion = fStKFParticlePerformanceInterface->GetParticleMCId(particle.DaughterIds()[0]);
+              int iMcProton = fStKFParticlePerformanceInterface->GetParticleMCId(particle.DaughterIds()[1]);
+              StMuMcTrack *mcProton= fMuDst->MCtrack(iMcProton);
+              StMuMcTrack *mcPion = fMuDst->MCtrack(iMcPion);
+              // cout <<mcPion->GePid()<<" "<<mcProton->GePid() << endl;
+              bool correctDau =mcProton->GePid()==14 && mcPion->GePid()==9; 
+              bool isLambdaDau = (mcProton->IdVx() == mcPion->IdVx()) && correctDau;
+              if (!isLambdaDau)  continue;
+              // cout << isLambdaDau << " "<<isMcDeu <<endl;
+
+              // 9 -> pion-
+              b0mcpx = mcPion->Pxyz().x();
+              b0mcpy = mcPion->Pxyz().y();
+              b0mcpz = mcPion->Pxyz().z();
+
+              // 14 -> proton
+              b1mcpx = mcProton->Pxyz().x();
+              b1mcpy = mcProton->Pxyz().y();
+              b1mcpz = mcProton->Pxyz().z();
+
+              // bismc=-20;
+
+              newEvent.pi_v_mcpx.push_back(b0mcpx);
+              newEvent.pi_v_mcpy.push_back(b0mcpy);
+              newEvent.pi_v_mcpz.push_back(b0mcpz);
+
+              newEvent.p_v_mcpx.push_back(b1mcpx);
+              newEvent.p_v_mcpy.push_back(b1mcpy);
+              newEvent.p_v_mcpz.push_back(b1mcpz);
+
+            } // end of mc pion and proton 
+            else continue;
+          }
+
             float sigma, chi2prim, dca, m2;
             int nhits;
             FillDaughterInfo(pion, pion.DaughterIds()[0], 211, chi2prim, nhits, dca, sigma, m2 );
@@ -1492,36 +1552,49 @@ Int_t StKFParticleAnalysisMaker::Make()
           //fot test
           bisMix=2;
           // cout <<newEvent.p_v.size()<<" "<<newEvent.p_v_dca.size() << endl;
-            for (int id = 0;id<newEvent.d_v.size();id++){
-              for (int iL = 0;iL<newEvent.p_v.size();iL++){
-                // cout << " start fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
-                bool filltree = FillThreeDaughtersMix(newEvent.pi_v[iL],newEvent.p_v[iL],newEvent.d_v[id], newEvent.ppi_v[iL], 0,0,0,0);
-                //add daughter further info
-                chi2primary_d = newEvent.d_v_chi2prim[id];
-                nhits_deuteron = newEvent.d_v_nhits[id];
-                dca_deuteron = newEvent.d_v_dca[id];
-                bdm2 = newEvent.d_v_m2[id];
-                dca_deuteron = newEvent.d_v_dca[id];
-                bdedx = newEvent.d_v_dEdx[id];
-                bzdeuteron =  newEvent.d_v_z[id];
-                 
-                chi2primary_pi = newEvent.pi_v_chi2prim[iL];
-                bpionnsigma = newEvent.pi_v_sigma[iL];
-                nhits_pion = newEvent.pi_v_nhits[iL];
-                dca_pion = newEvent.pi_v_dca[iL];
-                bpionm2 = newEvent.pi_v_m2[iL];
+          for (int id = 0;id<newEvent.d_v.size();id++){
+            for (int iL = 0;iL<newEvent.p_v.size();iL++){
+              // cout << " start fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
+              bool filltree = FillThreeDaughtersMix(newEvent.pi_v[iL],newEvent.p_v[iL],newEvent.d_v[id], newEvent.ppi_v[iL], 0,0,0,0);
+              //add daughter further info
+              chi2primary_d = newEvent.d_v_chi2prim[id];
+              nhits_deuteron = newEvent.d_v_nhits[id];
+              dca_deuteron = newEvent.d_v_dca[id];
+              bdm2 = newEvent.d_v_m2[id];
+              dca_deuteron = newEvent.d_v_dca[id];
+              bdedx = newEvent.d_v_dEdx[id];
+              bzdeuteron =  newEvent.d_v_z[id];
+               
+              chi2primary_pi = newEvent.pi_v_chi2prim[iL];
+              bpionnsigma = newEvent.pi_v_sigma[iL];
+              nhits_pion = newEvent.pi_v_nhits[iL];
+              dca_pion = newEvent.pi_v_dca[iL];
+              bpionm2 = newEvent.pi_v_m2[iL];
 
-                chi2primary_proton = newEvent.p_v_chi2prim[iL];
-                bprotonsigma = newEvent.p_v_sigma[iL];
-                nhits_proton = newEvent.p_v_nhits[iL];
-                dca_proton = newEvent.p_v_dca[iL];
-                bprotonm2 = newEvent.p_v_m2[iL];    
-                if (filltree) 
-                {
-                  htriton3_tree->Fill();
-                } 
-              }                
-            }
+              chi2primary_proton = newEvent.p_v_chi2prim[iL];
+              bprotonsigma = newEvent.p_v_sigma[iL];
+              nhits_proton = newEvent.p_v_nhits[iL];
+              dca_proton = newEvent.p_v_dca[iL];
+              bprotonm2 = newEvent.p_v_m2[iL];    
+
+              if (fMCMixEvent) 
+              {
+                b0mcpx = newEvent.pi_v_mcpx[iL];  
+                b0mcpy = newEvent.pi_v_mcpy[iL];  
+                b0mcpz = newEvent.pi_v_mcpz[iL];  
+                b1mcpx = newEvent.p_v_mcpx[iL];  
+                b1mcpy = newEvent.p_v_mcpy[iL];  
+                b1mcpz = newEvent.p_v_mcpz[iL];  
+                bismc = -20;
+              }
+
+              //if 
+              if (filltree) 
+              {
+                htriton3_tree->Fill();
+              } 
+            }                
+          }
         }
         
         if ( bMixEventBuffer[centralityBin][EPbin][Vtxbin].size()==fMixEventBufferSize && fillBuffer){
@@ -1563,6 +1636,17 @@ Int_t StKFParticleAnalysisMaker::Make()
                   dca_proton = newEvent.p_v_dca[iL];
                   bprotonm2 = newEvent.p_v_m2[iL];
 
+                  if (fMCMixEvent) 
+                  {
+                    b0mcpx = newEvent.pi_v_mcpx[iL];  
+                    b0mcpy = newEvent.pi_v_mcpy[iL];  
+                    b0mcpz = newEvent.pi_v_mcpz[iL];  
+                    b1mcpx = newEvent.p_v_mcpx[iL];  
+                    b1mcpy = newEvent.p_v_mcpy[iL];  
+                    b1mcpz = newEvent.p_v_mcpz[iL];  
+                    bismc = -20;
+                  }
+
                   htriton3_tree->Fill(); 
                 }
               }                
@@ -1590,6 +1674,17 @@ Int_t StKFParticleAnalysisMaker::Make()
                   nhits_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_nhits[iL];
                   dca_proton = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_dca[iL];
                   bprotonm2 = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_m2[iL];
+
+              if (fMCMixEvent) 
+              {
+                b0mcpx = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_mcpx[iL];  
+                b0mcpy = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_mcpy[iL];  
+                b0mcpz = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].pi_v_mcpz[iL];  
+                b1mcpx = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_mcpx[iL];  
+                b1mcpy = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_mcpy[iL];  
+                b1mcpz = bMixEventBuffer[centralityBin][EPbin][Vtxbin][ie].p_v_mcpz[iL];  
+                bismc = -20;
+              }
                 if (filltree) 
                 {
                   // cout << " finish fill mix tree: d+mix Lambda "<< ie << " lambda idx "<< iL<< endl;
@@ -2142,16 +2237,25 @@ Int_t StKFParticleAnalysisMaker::Make()
           v_01.GetMass(mass_01, mass_01_err);
           v_01_chi2primary = v_01.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
           v_01_pvdca = v_01.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+          v_01_x = v_01.GetX();
+          v_01_y = v_01.GetY();
+          v_01_z = v_01.GetZ();
 
           v_02.Construct(v_d02, 2, 0);
           v_02.GetMass(mass_02, mass_02_err);
           v_02_chi2primary = v_02.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
           v_02_pvdca = v_02.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+          v_02_x = v_02.GetX();
+          v_02_y = v_02.GetY();
+          v_02_z = v_02.GetZ();
 
           v_12.Construct(v_d12, 2, 0);
           v_12.GetMass(mass_12, mass_12_err);
           v_12_chi2primary = v_12.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
           v_12_pvdca = v_12.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+          v_12_x = v_12.GetX();
+          v_12_y = v_12.GetY();
+          v_12_z = v_12.GetZ();
 
           //			float v_01_dca;
           //			float v_02_dca;
@@ -2900,11 +3004,31 @@ void StKFParticleAnalysisMaker::FillDaughterInfo(KFParticle& daughter, int track
   dca= fStKFParticleInterface->Getdca(trackId);
   bm2 = fStKFParticleInterface->Getm2(trackId);
 }
-bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFParticle& proton, KFParticle& deuteron, KFParticle& PPi, double dVx, double dVy, double dVz, int mode)
+bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle pion, KFParticle proton, KFParticle deuteron, KFParticle PPi, double dVx, double dVy, double dVz, int mode)
 {
   if (PPi.GetPDG()< 0 || deuteron.GetPDG() <0) return false; //only look at particle
   float fDistanceCut=5, fLCut=1;
   float cut[3]={3,10,10};  // ldl, chi2topo, chi2geo
+
+  //pip pair
+  if (mode==1) {
+    deuteron.X()=dVx+deuteron.GetX();
+    deuteron.Y()=dVy+deuteron.GetY();
+    deuteron.Z()=dVz+deuteron.GetZ();
+  }
+  else if (mode==2) {
+    pion.X()=dVx+pion.GetX();
+    pion.Y()=dVy+pion.GetY();
+    pion.Z()=dVz+pion.GetZ();
+
+    proton.X()=dVx+proton.GetX();
+    proton.Y()=dVy+proton.GetY();
+    proton.Z()=dVz+proton.GetZ();
+
+    PPi.X()=dVx+PPi.GetX();
+    PPi.Y()=dVy+PPi.GetY();
+    PPi.Z()=dVz+PPi.GetZ();
+  }
 
   //pip pair
   KFParticle v_lambda(PPi);
@@ -3005,7 +3129,6 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
   bprotonpy = proton.GetPy();
   bprotonpz = proton.GetPz();
 
-
   const KFParticle* v_d01[2] = {&pion, &proton};
   const KFParticle* v_d02[2] = {&pion, &deuteron};
   const KFParticle* v_d12[2] = {&proton, &deuteron};
@@ -3018,16 +3141,25 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle& pion, KFPartic
   v_01.GetMass(mass_01, mass_01_err);
   v_01_chi2primary = v_01.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
   v_01_pvdca = v_01.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+  v_01_x = v_01.GetX();
+  v_01_y = v_01.GetY();
+  v_01_z = v_01.GetZ();
 
   v_02.Construct(v_d02, 2, 0);
   v_02.GetMass(mass_02, mass_02_err);
   v_02_chi2primary = v_02.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
   v_02_pvdca = v_02.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+  v_02_x = v_02.GetX();
+  v_02_y = v_02.GetY();
+  v_02_z = v_02.GetZ();
 
   v_12.Construct(v_d12, 2, 0);
   v_12.GetMass(mass_12, mass_12_err);
   v_12_chi2primary = v_12.GetDeviationFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
   v_12_pvdca = v_12.GetDistanceFromVertex(fStKFParticleInterface->GetTopoReconstructor()->GetPrimVertex());
+  v_12_x = v_12.GetX();
+  v_12_y = v_12.GetY();
+  v_12_z = v_12.GetZ();
 
   v_01_chi2ndf = v_01.Chi2()/v_01.NDF();
   v_02_chi2ndf = v_02.Chi2()/v_02.NDF();
@@ -3153,6 +3285,17 @@ Int_t StKFParticleAnalysisMaker::Centrality(int gRefMult )
   else if (gRefMult>=centFull[0] && gRefMult<centFull[1] ) centrality=0;
   else centrality = 9;
 
+  return centrality;
+}
+Int_t StKFParticleAnalysisMaker::Centrality16(int gRefMult )
+{
+  int centrality;
+  int centFull[17]={5, 7,9,12 ,16, 21,26, 33,41, 50,60, 72,86, 101, 119, 142,195};
+  centrality = -1;
+  for (int ib=0;ib<16;ib++){
+      if (gRefMult>=centFull[ib] && gRefMult<centFull[ib+1] ) centrality=ib;
+  }
+  if (gRefMult>=centFull[16]) centrality=15;
   return centrality;
 }
 Double_t StKFParticleAnalysisMaker::FitWeight(Double_t refMult)

@@ -223,7 +223,7 @@ void readmc(TString mInputlist="data/H3L3b_tree_mc_phase.root", int mode = 0, TS
     if (mode==0) mcptc.SetXYZT(bmcpx,bmcpy,bmcpz,sqrt(bmcpx*bmcpx+bmcpy*bmcpy+bmcpz*bmcpz+ht_mass*ht_mass));
     else if (mode==1) 
        mcptc.SetXYZT(bmcpx,bmcpy,bmcpz,sqrt(bmcpx*bmcpx+bmcpy*bmcpy+bmcpz*bmcpz+ld_mass*ld_mass));
-    double bmcrap = mcptc.Rapidity() - ycm;
+    double bmcrap = -1*(mcptc.Rapidity() - ycm);
     hPhase->Fill(bmcrap, mcptc.Pt());
     double ptweight = 1; //reserved
     double rapweight = 1;

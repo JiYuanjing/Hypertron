@@ -232,6 +232,16 @@ void drawCompQuasi()
   projAndComp("hptpidca", fH3L, fH3L3bquasi, c,pdf,"#pi DCA","" ,2);
   projAndComp("hptpdca", fH3L, fH3L3bquasi, c,pdf , "p DCA","" ,2);
   projAndComp("hptsumdca", fH3L, fH3L3bquasi, c,pdf , "p+pi DCA","" ,2);
+ 
+  projAndComp("hptH3L_l", fH3L, fH3L3bquasi, c,pdf,"l", "p",4 );
+  projAndComp("hptH3L_ldl", fH3L, fH3L3bquasi, c,pdf,"l/dl", "p",4 );
+  projAndComp("hptH3L_dchi2prim", fH3L, fH3L3bquasi, c,pdf,"d chi2primary", "p",4 );
+  projAndComp("hptH3L_pchi2prim", fH3L, fH3L3bquasi, c,pdf,"p chi2primary", "p",4 );
+  projAndComp("hptH3L_pichi2prim", fH3L, fH3L3bquasi, c,pdf,"#pi chi2primary", "p",4);
+  projAndComp("hptH3L_dDca", fH3L, fH3L3bquasi, c,pdf,"d DCA", "p",1);
+  projAndComp("hptH3L_dpDca", fH3L, fH3L3bquasi, c,pdf,"dp pair DCA", "p",4);
+  projAndComp("hptH3L_chi2topo", fH3L, fH3L3bquasi, c,pdf,"chi2topo", "p",4);
+  projAndComp("hptH3L_chi2ndf", fH3L, fH3L3bquasi, c,pdf,"chi2NDF", "p",4);
 
   pdf->On();
   pdf->Close();
@@ -263,5 +273,6 @@ void drawCompLaDeu()
 
 void drawComp()
 {
-  drawCompLaH3L();
+  // drawCompLaH3L();
+  drawCompQuasi();
 }
