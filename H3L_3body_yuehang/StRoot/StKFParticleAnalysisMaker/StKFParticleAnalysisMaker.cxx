@@ -3129,6 +3129,10 @@ bool StKFParticleAnalysisMaker::FillThreeDaughtersMix(KFParticle pion, KFParticl
   bprotonpy = proton.GetPy();
   bprotonpz = proton.GetPz();
 
+  bdpx = deuteron.GetPx();
+  bdpy = deuteron.GetPy();
+  bdpz = deuteron.GetPz();
+
   const KFParticle* v_d01[2] = {&pion, &proton};
   const KFParticle* v_d02[2] = {&pion, &deuteron};
   const KFParticle* v_d12[2] = {&proton, &deuteron};

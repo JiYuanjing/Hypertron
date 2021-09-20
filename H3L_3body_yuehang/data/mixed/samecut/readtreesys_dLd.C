@@ -13,7 +13,7 @@
 #include <fstream>
 
 // void readtree(TString mInputlist="H3L3b_tree_mc.root", int mode = 0, TString outfile="fout_H3L.root")
-void readtreesys(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1, int const isMix=0, int centLow=3, int centHigh=8)
+void readtreesys_dLd(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,   TString outfile="fout_Lambda.root", int const mcState=1, int const isMix=0, int centLow=3, int centHigh=8, bool applycorr=0)
 {
   bool fillQAplots=1;
   TStopwatch time;
@@ -31,8 +31,10 @@ void readtreesys(TString mInputlist="Lambda_tree_mc.root", int const mode = 1,  
   double const mass_hl = 3.9239;
   double const hl_width = 0.005;
   double const mass_ld = 1.11568;
+  double const mass_d = 1.8756;
   double const mass_p = 0.93827;
   double const mass_pi = 0.13957;
+  TGraph* gdLdCorr = new TGraph("corr.txt");
 
 TF1* fH3Ldydpt[3];
 double par[3][3]={{0.267422, 43782.6, 2.99339}, {0.200836, 92736.2,2.99339}, {0.136789, 136882, 2.99339} };
@@ -309,6 +311,8 @@ for (int irap=0;irap<3;irap++) {
   hptH3Lmass->Sumw2();
   TH3F* hH3LMassPtY= new TH3F("hH3LMassPtY","hH3LMassPtY;p_{T};H3L mass;Rapidity",100,0,5,200,2.95,3.05, 100, -1.,0);
   hH3LMassPtY->Sumw2();
+  TH3F* hH3LKstarPtY= new TH3F("hH3LMassPtY","hH3LMassPtY;p_{T};H3L kstar;Rapidity",100,0,5,300, 0, 150, 100, -1.,0);
+  hH3LKstarPtY->Sumw2();
 
 
   TH3F* hH3LMassPtCent= new TH3F("hH3LMassPtCent","hH3LMassPtCent;p_{T};H3L mass;Centrality",100,0,5,200,2.95,3.05, 9, -0.5,8.5);
@@ -318,11 +322,8 @@ for (int irap=0;irap<3;irap++) {
 
   TH2F* hH3LptProtonPt = new TH2F("hH3LptProtonPt","hH3LptProtonPt; p_{T};", 100, 0, 5, 80, 0, 4);
   hH3LptProtonPt->Sumw2();
-  TH2F* hH3LptPionPt = new TH2F("hH3LptPionPt","hH3LptPionPt; p_{T};", 100, 0, 5, 60, 0, 2);
+  TH2F* hH3LptPionPt = new TH2F("hH3LptPionPt","hH3LptPionPt; p_{T};", 100, 0, 5, 60, 0, 3);
   hH3LptPionPt->Sumw2();
-  TH2F* hH3LptDeuPt = new TH2F("hH3LptDeuPt","hH3LptDeuPt; p_{T};", 100, 0, 5, 80, 0, 4);
-  hH3LptDeuPt->Sumw2();
-
 
   //topological variable for H3L
   TH2F* hptH3L_l= new TH2F("hptH3L_l","hptH3L_l;p_{T};l",100,0,5,500,0,100);
@@ -675,6 +676,7 @@ for (int irap=0;irap<3;irap++) {
     /* cout << bmcrap<< endl; */
     /* double mcweight = 1./g_pt_fine_in->GetBinContent(g_pt_fine_in->FindBin(bmcrap,sqrt(bmcpx*bmcpx+bmcpy*bmcpy)));; */
     double mcweight = 1;
+    double corrweight = 1;
     if (mcState!=0) {
       TLorentzVector mcptc;
       if (mode==0 && mcState==1 ) 
@@ -682,10 +684,27 @@ for (int irap=0;irap<3;irap++) {
       else if (mode==0 && mcState==-20 ) {
         TLorentzVector pion;
         pion.SetXYZM(b0mcpx, b0mcpy, b0mcpz, mass_pi );
+        // pion.SetXYZM(bpionpx, bpionpy, bpionpz, mass_pi );
         TLorentzVector proton;
         proton.SetXYZM( b1mcpx, b1mcpy, b1mcpz, mass_p );
+        // proton.SetXYZM( bprotonpx, bprotonpy, bprotonpz, mass_p );
         mcptc = pion+proton; //using lambda pt
+        TLorentzVector deu;
+        deu.SetXYZM(bdpx, bdpy, bdpz, mass_d);
         /* cout <<mcptc.Pt() << endl; */
+        TLorentzVector H3LR = mcptc + deu;
+        TLorentzVector Qvect = (mcptc-deu);
+        
+        if (applycorr) {
+          double Pinv = H3LR.Mag();
+          double Q1 = (mass_ld*mass_ld-mass_d*mass_d)/Pinv;
+          double Q=sqrt(Q1*Q1-Qvect.Mag2());
+          double kstar = Q/2.0;
+          if (kstar<0.075 && kstar>0.003) corrweight=gdLdCorr->Eval(kstar*1e3);
+          else if (kstar<0.003) corrweight=gdLdCorr->Eval(3);
+          else if (kstar>0.075) corrweight=1;
+          if (corrweight<1) corrweight=1;
+        }
       }
       else if (mode==1 && mcState==1) 
         mcptc.SetXYZM(bmcpx,bmcpy,bmcpz,mass_ld);
@@ -724,7 +743,7 @@ for (int irap=0;irap<3;irap++) {
     gweight=reweight; //centrality weight
     // gweight=1; //centrality weight
 
-    double weight = ptweight*rapweight*mcweight*gweight;
+    double weight = ptweight*rapweight*mcweight*gweight*corrweight;
     // if (mcState==0) weight = reweight; 
     if (mcState==0) weight = 1; 
     double ppi_pt = sqrt(bpx*bpx+bpy*bpy); // lambda case 
@@ -762,6 +781,19 @@ for (int irap=0;irap<3;irap++) {
     if (mode==0 ) {
       TLorentzVector H3L;
       H3L.SetXYZM(bpx, bpy, bpz, bparticlemass );
+      TLorentzVector proton;
+      proton.SetXYZM(bprotonpx, bprotonpy, bprotonpz, mass_p );
+      TLorentzVector pion;
+      pion.SetXYZM(bpionpx, bpionpy, bpionpz, mass_pi );
+      TLorentzVector deuteron;
+      deuteron.SetXYZM(bdpx, bdpy, bdpz, mass_d );
+      TLorentzVector Ld = pion+proton;
+      TLorentzVector Qvect = (Ld-deuteron);
+      double Pinv = H3L.Mag();
+      double Q1 = (mass_ld*mass_ld-mass_d*mass_d)/Pinv;
+      double Q=sqrt(Q1*Q1-Qvect.Mag2());
+      double kstar = Q/2.0;
+
       double H3LpT = sqrt(bpx*bpx+bpy*bpy);
       double H3Ly = -1*(H3L.Rapidity() - ycm);
       double p_pt = sqrt(bprotonpx*bprotonpx+bprotonpy*bprotonpy);
@@ -771,12 +803,13 @@ for (int irap=0;irap<3;irap++) {
       double d_pt = sqrt(bdpx*bdpx+bdpy*bdpy);
 
       double dpvtx = sqrt( v_12_x*v_12_x+v_12_y*v_12_y );
-      bool dcaCut = (dca_deuteron<1) && pi_pt>0.15 && p_pt>0.15 && d_pt>0.15;
-      // bool dcaCut = pi_pt>0.1 && p_pt>0.1 && d_pt>0.1;
+      // bool dcaCut = (dca_deuteron<1) && pi_pt>0.15 && p_pt>0.15 && d_pt>0.15;
+      bool dcaCut = 1;
       bool nhitscut = nhits_proton>15 && nhits_deuteron>15 && nhits_pion>15;
       bool MERecCut = ht_l<200 && ht_l>1 && ht_ldl>3 && ht_chi2ndf<10 && ht_chi2topo<10;
       //default cut
-      double lcut=8, ldlcut=5, chi2topocut = 2, pdcut=3, ppcut=2, chi2ndfcut=3.5, chi2_dcut=0, chi2_picut=10, chi2_pcut=5;
+      // double lcut=1, ldlcut=1, chi2topocut = 10, pdcut=5, ppcut=5, chi2ndfcut=5, chi2_dcut=0, chi2_picut=1, chi2_pcut=1;
+      double lcut=8, ldlcut=5, chi2topocut = 3, pdcut=5, ppcut=5, chi2ndfcut=3.5, chi2_dcut=0, chi2_picut=10, chi2_pcut=5;
       // double lcut=8, ldlcut=5, chi2topocut = 2.5, pdcut=3, ppcut=2, chi2ndfcut=1.5, chi2_dcut=0, chi2_picut=10, chi2_pcut=5;
       // double lcut=8, ldlcut=5, chi2topocut = 2., pdcut=3, ppcut=2, chi2ndfcut=3.5, chi2_dcut=0, chi2_picut=10, chi2_pcut=5;
       bool passTopoCuts =  ht_l >lcut && ht_ldl>ldlcut  && ht_chi2topo<chi2topocut && fabs(p_d)<pdcut && fabs(p_p)<ppcut && ht_chi2ndf<chi2ndfcut && chi2primary_d>chi2_dcut  && chi2primary_pi>chi2_picut && chi2primary_proton>chi2_pcut && MERecCut && dcaCut;
@@ -1049,25 +1082,25 @@ for (int irap=0;irap<3;irap++) {
           hptH3L_piDcaSig->Fill( H3LpT, dca_pion, weight);
           hptH3L_dpDcaSig->Fill( H3LpT, v_12_dca, weight);
           hptH3L_ppi_d_DCASig->Fill( H3LpT, v_012_dca, weight);
-          h3H3L_v12xySig->Fill(dca_deuteron, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_proton, weight);
-          h3H3L_v02xySig->Fill(dca_deuteron, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_pion, weight);
+          // h3H3L_v12xySig->Fill(dca_deuteron, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_proton, weight);
+          // h3H3L_v02xySig->Fill(dca_deuteron, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_pion, weight);
         }
-        if (ht_l >8 && ht_ldl>5 && fabs(p_d)<3 && fabs(p_p)<2  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && MERecCut){ 
-           h3H3L_v12xySig2->Fill(ht_chi2topo, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), ht_chi2ndf, weight);
-           h3H3L_v02xySig2->Fill(ht_chi2topo, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), ht_chi2ndf, weight);
-        }
-        if (ht_l >8 && ht_ldl>5 && fabs(p_d)<3 && fabs(p_p)<2  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && ht_chi2ndf<3.5 && MERecCut){ 
-           h3H3L_v12xySig3->Fill(ht_chi2topo, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_proton, weight);
-           h3H3L_v12xySig4->Fill(ht_chi2topo, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_deuteron, weight);
-           h3H3L_v02xySig3->Fill(ht_chi2topo, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_deuteron, weight);
-           h3H3L_v02xySig4->Fill(ht_chi2topo, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_pion, weight);
-        }
-        if (ht_l >8 && ht_ldl>5 && fabs(p_d)<3 && fabs(p_p)<2  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && ht_chi2topo<3. && MERecCut){ 
-           h3H3L_v12xySig5->Fill(ht_chi2ndf, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_deuteron, weight);
-           h3H3L_v12xySig6->Fill(ht_chi2ndf, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_proton, weight);
-           h3H3L_v02xySig5->Fill(ht_chi2ndf, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_deuteron, weight);
-           h3H3L_v02xySig6->Fill(ht_chi2ndf, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_pion, weight);
-        }
+        // if (ht_l >8 && ht_ldl>5 && fabs(p_d)<3 && fabs(p_p)<2  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && MERecCut){ 
+        //    h3H3L_v12xySig2->Fill(ht_chi2topo, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), ht_chi2ndf, weight);
+        //    h3H3L_v02xySig2->Fill(ht_chi2topo, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), ht_chi2ndf, weight);
+        // }
+        // if (ht_l >8 && ht_ldl>5 && fabs(p_d)<3 && fabs(p_p)<2  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && ht_chi2ndf<3.5 && MERecCut){ 
+        //    h3H3L_v12xySig3->Fill(ht_chi2topo, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_proton, weight);
+        //    h3H3L_v12xySig4->Fill(ht_chi2topo, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_deuteron, weight);
+        //    h3H3L_v02xySig3->Fill(ht_chi2topo, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_deuteron, weight);
+        //    h3H3L_v02xySig4->Fill(ht_chi2topo, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_pion, weight);
+        // }
+        // if (ht_l >8 && ht_ldl>5 && fabs(p_d)<3 && fabs(p_p)<2  && chi2primary_d>0 && chi2primary_pi>10 && chi2primary_proton>5 && ht_chi2topo<3. && MERecCut){ 
+        //    h3H3L_v12xySig5->Fill(ht_chi2ndf, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_deuteron, weight);
+        //    h3H3L_v12xySig6->Fill(ht_chi2ndf, sqrt(v_12_x*v_12_x+v_12_y*v_12_y), dca_proton, weight);
+        //    h3H3L_v02xySig5->Fill(ht_chi2ndf, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_deuteron, weight);
+        //    h3H3L_v02xySig6->Fill(ht_chi2ndf, sqrt(v_02_x*v_02_x+v_02_y*v_02_y), dca_pion, weight);
+        // }
       }
 
       if (passTopoCuts) 
@@ -1122,11 +1155,9 @@ for (int irap=0;irap<3;irap++) {
           hptH3L_ppildlSBL->Fill( H3LpT, v_lambda_ldl_0, weight);
           hptH3L_ppi_d_DCASBL->Fill( H3LpT, v_012_dca, weight);
         }
-          hH3LPPiMassPt->Fill(H3LpT, bparticlemass, mass_01, weight);
-          hH3LptProtonPt->Fill(H3LpT, p_pt , weight );
-          hH3LptDeuPt->Fill(H3LpT, d_pt, weight );
-          hH3LptPionPt->Fill(H3LpT, pi_pt, weight);       
-
+        hH3LptProtonPt->Fill(H3LpT, p_pt , weight );
+        hH3LptPionPt->Fill(H3LpT, pi_pt, weight);       
+        hH3LPPiMassPt->Fill(H3LpT, bparticlemass, mass_01, weight);
       }
 
       if (passscantopo)
@@ -1301,7 +1332,6 @@ for (int irap=0;irap<3;irap++) {
 
     hH3LptPionPt->Write();
     hH3LptProtonPt->Write();
-    hH3LptDeuPt->Write();
     hH3LPPiMassPt->Write();
 
 

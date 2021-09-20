@@ -5,12 +5,12 @@
 # input="data_test3.root"
 # input="dataME_test2.root"
 # input="test.list"
-input="quasiMC2.root"
+input="quasiMC3.root"
 # root -q -b readMc.C\(\"$input\",0,\"fMC_H3L_0080.root\",1\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_MC_0080_010pt.root\",1,0,0,8\)
 # root -q -b readMc.C\(\"$input\",0,\"fMC_H3L_0050.root\",1,3,8\)
-root -b -q readtree.C\(\"$input\",0,\"fout_H3L_MC_0050_015pt.root\",1,0,3,8\)
-# root -b -q readtreesys.C\(\"$input\",0,\"fout_H3L_MC_0050_015pt_sys.root\",1,0,3,8\)
+# root -b -q readtree.C\(\"$input\",0,\"fout_H3L_MC_0050_015pt.root\",1,0,3,8\)
+root -b -q readtreesys.C\(\"$input\",0,\"fout_H3L_MC_0050_015pt_sys_new.root\",1,0,3,8\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_MC_0050_tight.root\",1,0,3,8\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_MC_0050_010pt.root\",1,0,3,8\)
 
@@ -18,12 +18,16 @@ input="phaseMC.root"
 # root -b -q readtreesys.C\(\"$input\",0,\"fout_H3L_phaseMC_0050_015pt_sys.root\",1,0,3,8\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_phase_MC.root\",1,0\)
 # input="LambdaMC.root"
-input="LambdaMC_mix_pid3.root"
+# root -b -q readtreesys.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys.root\",-20,0,3,8\)
+# input="LambdaMC_mix_pid3.root"
+input="LambdaMC_mix_pid3_large.root"
 # root -b -q readtree.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt.root\",-20,0,3,8\)
 # root -b -q readtreesys.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys_pid2.root\",-20,0,3,8\)
-# root -b -q readtreesys.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys.root\",-20,0,3,8\)
 # root -b -q readtreesys.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys_pid3.root\",-20,0,3,8\)
 # root -b -q readtreesys.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys_mixpid3.root\",-20,1,3,8\)
+# root -b -q readtreesys.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys_sepid3.root\",-20,2,3,8\)
+# root -b -q readtreesys_dLd.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys_mixpid3_ncorr.root\",-20,0,3,8,0\)
+# root -b -q readtreesys_dLd.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_015pt_sys_mixpid3_corr.root\",-20,0,3,8,1\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_tight.root\",-20,0,3,8\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_Lambda_MC_Cuts_0050_010pt.root\",-20,0,3,8\)
 # root -b -q readtree.C\(\"$input\",0,\"fout_H3L_data.root\",0,0\)

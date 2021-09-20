@@ -56,12 +56,12 @@ void projAndComp(TString name, TFile* fH3L, TFile* fLa, TCanvas* c,TPDF* pdf,TSt
   /* c->Divide(3,2); */
   /* int  const bins=6; */
   /* double ptedge[bins+1]={0,0.5,1,2,3,4,5}; */
-  // c->Divide(2,2);
-  // int  const bins=4;
-  // double ptedge[bins+1]={0,1, 1.5,2,2.5};
-  c->Divide(1,1);
-  int  const bins=1;
-  double ptedge[bins+1]={1,2.5};
+  c->Divide(2,2);
+  int  const bins=4;
+  double ptedge[bins+1]={1, 1.5,2,2.5, 3.5};
+  // c->Divide(1,1);
+  // int  const bins=1;
+  // double ptedge[bins+1]={0,3.};
   // double ptedge[bins+1]={1,2.5};
 
   for (int i=0;i<bins;i++)
@@ -78,6 +78,9 @@ void projAndComp(TString name, TFile* fH3L, TFile* fLa, TCanvas* c,TPDF* pdf,TSt
     p12->Draw();  
     p11->SetBottomMargin(0);
     p12->SetTopMargin(0);
+    // TH1F* h1H3= (TH1F*)h2H3L->ProjectionX(Form("h1H3%d",i), h2H3L->GetYaxis()->FindBin(ptedge[i]),h2H3L->GetYaxis()->FindBin(ptedge[i+1]));
+    // TH1F* h1La= (TH1F*)h2La->ProjectionX(Form("h1La%d",i), h2La->GetYaxis()->FindBin(ptedge[i]),h2La->GetYaxis()->FindBin(ptedge[i+1]));
+
     TH1F* h1H3= (TH1F*)h2H3L->ProjectionY(Form("h1H3%d",i), h2H3L->GetXaxis()->FindBin(ptedge[i]),h2H3L->GetXaxis()->FindBin(ptedge[i+1]));
     TH1F* h1La= (TH1F*)h2La->ProjectionY(Form("h1La%d",i), h2La->GetXaxis()->FindBin(ptedge[i]),h2La->GetXaxis()->FindBin(ptedge[i+1]));
     h1La->SetLineColor(kRed);
@@ -1092,6 +1095,11 @@ double calpurity(TString fithistname, double cutslow, double cutshigh, double hi
 
   setHistStyle(hchi2ndf_Sig, kBlue, kFullCircle, 1.5);
   hchi2ndf_Sig->Draw();
+  double realeff = (hchi2ndf_Sig->Integral(hchi2ndf_Sig->GetXaxis()->FindBin(cutslow), hchi2ndf_Sig->GetXaxis()->FindBin(cutshigh))/hchi2ndf_Sig->Integral(hchi2ndf_Sig->GetXaxis()->FindBin(cutslow), hchi2ndf_Sig->GetXaxis()->FindBin(10)));
+  double fakeeff = (hchi2ndf_H3L->Integral(hchi2ndf_H3L->GetXaxis()->FindBin(cutslow), hchi2ndf_H3L->GetXaxis()->FindBin(cutshigh))/hchi2ndf_H3L->Integral(hchi2ndf_H3L->GetXaxis()->FindBin(cutslow), hchi2ndf_H3L->GetXaxis()->FindBin(10)));
+  error = 0;
+  return fakeeff/realeff;
+
   TH1F* hRatio = (TH1F*)hchi2ndf_Sig->Clone("hratio");
   TF1* fMyFit = new TF1("fMyFit", MyFitFun, 0,100,2);
   TF1* fL = new TF1("fL", MyFitFun, 0,100,2);
@@ -1170,46 +1178,8 @@ double calpurity(TString fithistname, double cutslow, double cutshigh, double hi
 }
 double calpurityCut(TString fithistname, TString scalehistname, double cutslow, double cutshigh, double highpt, double lowpt, double highy, double lowy, TFile* f1, TFile* f2, double scale_i, TFile* fMc, TFile* fMc_ld, TCanvas* c, TPDF* pdf, TString xTitle, int rebin, double Xrange1, double Xrange2,double &error, double  rebinedge)
 {
-  c->cd();
-  TPad*    p11 = new TPad("upperPad", "upperPad",.005, .4, .995, .995);
-  TPad*    p12 = new TPad("lowerPad", "lowerPad", .005, .005, .995, .4);
-  p11->Draw(); 			       
-  p12->Draw();  
-  p11->SetBottomMargin(0);
-  p12->SetTopMargin(0);
-  p12->SetBottomMargin(0.18);
-
-  p11->cd();
   //fiting test
-  // TH3F* h2chi2ndf_Ld = (TH3F*)fMc_ld->Get(fithistname.Data())->Clone("h2chi2ndf_Ld");
-  TH3F* h2chi2ndf_Ld = (TH3F*)fMc_ld->Get((fithistname+"Sig").Data())->Clone("h2chi2ndf_Ld");
-  h2chi2ndf_Ld->SetDirectory(0);
-  hchi2ndf_Ld = (TH1F*)h2chi2ndf_Ld->ProjectionY("hchi2ndf_Ld", h2chi2ndf_Ld->GetXaxis()->FindBin(lowpt), h2chi2ndf_Ld->GetXaxis()->FindBin(highpt),
-                h2chi2ndf_Ld->GetZaxis()->FindBin(lowy), h2chi2ndf_Ld->GetZaxis()->FindBin(highy)  );
-  if (rebin>0) {
-    hchi2ndf_Ld->Rebin(rebin);
-    if (rebinedge>0) hchi2ndf_Ld = (TH1F*)reBinHist( (Xrange1+Xrange2)*rebinedge, Xrange1, Xrange2, hchi2ndf_Ld, 1 ); 
-  }
-  
-  // TH3F* h2chi2ndf_H3L = (TH3F*)fMc->Get(fithistname.Data())->Clone("h2chi2ndf_H3L");
-  TH3F* h2chi2ndf_H3L = (TH3F*)fMc->Get((fithistname+"Sig").Data())->Clone("h2chi2ndf_H3L");
-  h2chi2ndf_H3L->SetDirectory(0);
-  hchi2ndf_H3L = (TH1F*)h2chi2ndf_H3L->ProjectionY("hchi2ndf_H3L", h2chi2ndf_H3L->GetXaxis()->FindBin(lowpt), h2chi2ndf_H3L->GetXaxis()->FindBin(highpt),
-                  h2chi2ndf_H3L->GetZaxis()->FindBin(lowy), h2chi2ndf_H3L->GetZaxis()->FindBin(highy));
-  if (rebin>0) {
-    hchi2ndf_H3L->Rebin(rebin);
-    if (rebinedge>0) hchi2ndf_H3L = (TH1F*)reBinHist( (Xrange1+Xrange2)*rebinedge, Xrange1, Xrange2, hchi2ndf_H3L, 1 ); 
-  }
- 
-  Norm(hchi2ndf_H3L);
-  Norm(hchi2ndf_Ld);
-  hchi2ndf_Ld->Draw();
-  hchi2ndf_Ld->GetXaxis()->SetTitle(xTitle.Data());
-  hchi2ndf_H3L->Draw("same");
-  hchi2ndf_H3L->SetMarkerColor(kRed);
-  hchi2ndf_H3L->SetMarkerStyle(kOpenCircle);
-  addpdf(pdf);
-
+  f1->cd();
   TH1F* hcent_se = (TH1F*)f1->Get("hcent")->Clone("hcent_se");
   double nEvents_se = hcent_se->Integral(4, 9);
 
@@ -1286,6 +1256,35 @@ double calpurityCut(TString fithistname, TString scalehistname, double cutslow, 
   // drawBox( 3., hsig_bk->GetMinimum(),3.02, hsig_bk->GetMaximum()*0.5 , kBlue-9, 1001,1,0.3 ); 
   // addpdf(pdf);
 
+  // TH3F* h2chi2ndf_Ld = (TH3F*)fMc_ld->Get(fithistname.Data())->Clone("h2chi2ndf_Ld");
+  TH3F* h2chi2ndf_Ld = (TH3F*)fMc_ld->Get((fithistname+"Sig").Data())->Clone("h2chi2ndf_Ld");
+  h2chi2ndf_Ld->SetDirectory(0);
+  hchi2ndf_Ld = (TH1F*)h2chi2ndf_Ld->ProjectionY("hchi2ndf_Ld", h2chi2ndf_Ld->GetXaxis()->FindBin(lowpt), h2chi2ndf_Ld->GetXaxis()->FindBin(highpt),
+                h2chi2ndf_Ld->GetZaxis()->FindBin(lowy), h2chi2ndf_Ld->GetZaxis()->FindBin(highy)  );
+  if (rebin>0) {
+    hchi2ndf_Ld->Rebin(rebin);
+    if (rebinedge>0) hchi2ndf_Ld = (TH1F*)reBinHist( (Xrange1+Xrange2)*rebinedge, Xrange1, Xrange2, hchi2ndf_Ld, 1 ); 
+  }
+  
+  // TH3F* h2chi2ndf_H3L = (TH3F*)fMc->Get(fithistname.Data())->Clone("h2chi2ndf_H3L");
+  TH3F* h2chi2ndf_H3L = (TH3F*)fMc->Get((fithistname+"Sig").Data())->Clone("h2chi2ndf_H3L");
+  h2chi2ndf_H3L->SetDirectory(0);
+  hchi2ndf_H3L = (TH1F*)h2chi2ndf_H3L->ProjectionY("hchi2ndf_H3L", h2chi2ndf_H3L->GetXaxis()->FindBin(lowpt), h2chi2ndf_H3L->GetXaxis()->FindBin(highpt),
+                  h2chi2ndf_H3L->GetZaxis()->FindBin(lowy), h2chi2ndf_H3L->GetZaxis()->FindBin(highy));
+  if (rebin>0) {
+    hchi2ndf_H3L->Rebin(rebin);
+    if (rebinedge>0) hchi2ndf_H3L = (TH1F*)reBinHist( (Xrange1+Xrange2)*rebinedge, Xrange1, Xrange2, hchi2ndf_H3L, 1 ); 
+  }
+ 
+  Norm(hchi2ndf_H3L);
+  Norm(hchi2ndf_Ld);
+  hchi2ndf_Ld->Draw();
+  hchi2ndf_Ld->GetXaxis()->SetTitle(xTitle.Data());
+  hchi2ndf_H3L->Draw("same");
+  hchi2ndf_H3L->SetMarkerColor(kRed);
+  hchi2ndf_H3L->SetMarkerStyle(kOpenCircle);
+
+  f1->cd();
   TH3F* h2chi2ndf_Sig = (TH3F*)f1->Get((fithistname+"Sig").Data())->Clone("h2chi2ndf_Sig");
   h2chi2ndf_Sig->SetDirectory(0);
   // TH3F* h2chi2ndf_SBL = (TH3F*)f1->Get((fithistname+"SBL").Data())->Clone("h2chi2ndf_SBL");
@@ -1296,7 +1295,8 @@ double calpurityCut(TString fithistname, TString scalehistname, double cutslow, 
   TH3F* h2chi2ndf_Bk = (TH3F*)f2->Get((fithistname+"Sig").Data())->Clone("h2chi2ndf_Bk");
   h2chi2ndf_Bk->SetDirectory(0);
   h2chi2ndf_Sig->Add( h2chi2ndf_Bk , -1*scale ); 
-  h2chi2ndf_Sig->Draw();
+
+  // h2chi2ndf_Sig->Draw();
   // h2chi2ndf_SBL->Add(h2chi2ndf_SBR);
   // h2chi2ndf_SBL->Scale(scale*h2chi2ndf_Bk->Integral()/h2chi2ndf_SBL->Integral());
   // h2chi2ndf_Sig->Add(h2chi2ndf_SBL, -1);
@@ -1309,7 +1309,30 @@ double calpurityCut(TString fithistname, TString scalehistname, double cutslow, 
   }
 
   setHistStyle(hchi2ndf_Sig, kBlue, kFullCircle, 1.5);
+
+  TH1F* hSig = (TH1F*)hchi2ndf_Sig->Clone("hSig");
+  Norm(hSig);
+  hSig->SetMarkerColor(kBlue);
+  hSig->Draw("same");
+  addpdf(pdf);
+  // double realeff = (hchi2ndf_Sig->Integral(hchi2ndf_Sig->GetXaxis()->FindBin(cutslow), hchi2ndf_Sig->GetXaxis()->FindBin(cutshigh))/hchi2ndf_Sig->Integral(hchi2ndf_Sig->GetXaxis()->FindBin(cutslow), hchi2ndf_Sig->GetXaxis()->FindBin(10)));
+  // double fakeeff = (hchi2ndf_H3L->Integral(hchi2ndf_H3L->GetXaxis()->FindBin(cutslow), hchi2ndf_H3L->GetXaxis()->FindBin(cutshigh))/hchi2ndf_H3L->Integral(hchi2ndf_H3L->GetXaxis()->FindBin(cutslow), hchi2ndf_H3L->GetXaxis()->FindBin(10)));
+  // error = 0;
+  // return fakeeff/realeff;
+
+  c->cd();
+  TPad*    p11 = new TPad("upperPad", "upperPad",.005, .4, .995, .995);
+  TPad*    p12 = new TPad("lowerPad", "lowerPad", .005, .005, .995, .4);
+  p11->Draw(); 			       
+  p12->Draw();  
+  p11->SetBottomMargin(0);
+  p12->SetTopMargin(0);
+  p12->SetBottomMargin(0.18);
+
+  p11->cd();
+
   hchi2ndf_Sig->Draw();
+
   TH1F* hRatio = (TH1F*)hchi2ndf_Sig->Clone("hratio");
   TF1* fMyFit = new TF1("fMyFit", MyFitFun, 0,100,2);
   TF1* fL = new TF1("fL", MyFitFun, 0,100,2);
@@ -1318,7 +1341,7 @@ double calpurityCut(TString fithistname, TString scalehistname, double cutslow, 
   fL->SetLineColor(kRed);
   fH->SetLineColor(kRed);
   fMyFit->SetParLimits(0, 0, 1e10);
-  fMyFit->SetParLimits(1, 0, 2);
+  fMyFit->SetParLimits(1, 0, 4);
   if (Xrange1>=0 && Xrange2>=0) hchi2ndf_Sig->GetXaxis()->SetRangeUser( Xrange1, Xrange2);
   hchi2ndf_Sig->Fit(fMyFit,"RBL");
   double par[2];
@@ -1682,15 +1705,20 @@ void drawCompLaH3L()
   SetsPhenixStyle();
   /* TFile* fH3L= new TFile("fout_H3L3b_phase.root"); */
   // TFile* fH3L= new TFile("fout_H3L3b_quasi.root");
-  TFile* fH3L= new TFile("fout_H3L_MC_0050_015pt.root");
+  // TFile* fH3L= new TFile("fout_H3L_MC_0050_015pt.root");
+  // TFile* fH3L= new TFile("samecut/fout_Lambda_MC_Cuts_0050_015pt_sys_mixpid3_corr.root");
+  // TFile* fH3L= new TFile("fout_Lambda_MC_Cuts_0050_015pt_sys_mixpid3.root");
+  TFile* fH3L= new TFile("fout_Lambda_MC_Cuts_0050_015pt_sys_sepid3.root");
   /* TFile* fLa = new TFile("fout_Lambda.root"); */
   // TFile* fLa = new TFile("fout_Lambda_wLaD.root");
-  TFile* fLa = new TFile("fout_Lambda_MC_Cuts_0050_015pt.root");
+  // TFile* fLa = new TFile("fout_Lambda_MC_Cuts_0050_015pt.root");
+  // TFile* fLa = new TFile("fout_Lambda_MC_Cuts_0050_015pt_sys.root");
+  TFile* fLa = new TFile("fout_Lambda_MC_Cuts_0050_015pt_sys_pid3.root");
 
   TCanvas* c = new TCanvas("c","c");
   /* TPDF* pdf = new TPDF("Lambda_H3L_phase.pdf"); */
   /* TPDF* pdf = new TPDF("Lambda_H3L_quasi.pdf"); */
-  TPDF* pdf = new TPDF("Lambda_H3L_LambdaDeu.pdf");
+  TPDF* pdf = new TPDF("Lambda_ME.pdf");
   pdf->Off();
 
   // projAndComp("hptppimass", fH3L, fLa, c,pdf,"p#pi Mass (GeV/c^{2})", "plhist",1 ,"H3L quasi" ,"#Lambda+d","p#pi");
@@ -1704,16 +1732,28 @@ void drawCompLaH3L()
   // projAndComp("hptpdca", fH3L, fLa, c,pdf , "p DCA","" ,2, "H3L quasi" ,"#Lambda+d", "p#pi");
   // projAndComp("hptsumdca", fH3L, fLa, c,pdf , "p+pi DCA","" ,2, "H3L quasi" ,"#Lambda+d", "p#pi");
 
-  projAndComp("hptH3L_l", fH3L, fLa, c,pdf,"l", "p",4 );
-  projAndComp("hptH3L_ldl", fH3L, fLa, c,pdf,"l/dl", "p",4 );
+  // projAndComp("hptH3L_l", fH3L, fLa, c,pdf,"l", "p",4 , "#Lambda+d ME", "#Lambda+d SE" );
+  projAndComp("hptH3L_ldl", fH3L, fLa, c,pdf,"l/dl", "p",4 , "#Lambda+d ME", "#Lambda+d SE");
   projAndComp("hptH3L_dchi2prim", fH3L, fLa, c,pdf,"d chi2primary", "p",4 );
-  projAndComp("hptH3L_pchi2prim", fH3L, fLa, c,pdf,"p chi2primary", "p",4 );
-  projAndComp("hptH3L_pichi2prim", fH3L, fLa, c,pdf,"#pi chi2primary", "p",4);
+  // // projAndComp("hptH3L_pchi2prim", fH3L, fLa, c,pdf,"p chi2primary", "p",4 );
+  // // projAndComp("hptH3L_pichi2prim", fH3L, fLa, c,pdf,"#pi chi2primary", "p",4);
   projAndComp("hptH3L_dDca", fH3L, fLa, c,pdf,"d DCA", "p",1);
-  projAndComp("hptH3L_dpDca", fH3L, fLa, c,pdf,"dp pair DCA", "p",4);
-  projAndComp("hptH3L_chi2topo", fH3L, fLa, c,pdf,"chi2topo", "p",4);
-  projAndComp("hptH3L_chi2ndf", fH3L, fLa, c,pdf,"chi2NDF", "p",4);
-  projAndComp("hptH3L_ppichi2prim", fH3L, fLa, c,pdf,"p#pi chi2primary", "p",1);
+  // // projAndComp("hptH3L_dpDca", fH3L, fLa, c,pdf,"dp pair DCA", "p",4);
+  // projAndComp("hptH3L_chi2topo", fH3L, fLa, c,pdf,"chi2topo", "p",4, "#Lambda+d C(K*)-1", "#Lambda+d no wt");
+  // projAndComp("hptH3L_chi2ndf", fH3L, fLa, c,pdf,"chi2NDF", "p",4, "#Lambda+d C(K*)-1", "#Lambda+d no wt");
+  // // projAndComp("hptH3L_ppichi2prim", fH3L, fLa, c,pdf,"p#pi chi2primary", "p",1);
+  //
+  // projAndComp("hptH3L_lSig", fH3L, fLa, c,pdf,"l (2.989<M<2.995)", "p",8 , "#Lambda+d ME", "#Lambda+d SE" );
+  // projAndComp("hptH3L_ldlSig", fH3L, fLa, c,pdf,"l/dl (2.989<M<2.995)", "p",4 , "#Lambda+d ME", "#Lambda+d SE");
+  // projAndComp("hptH3L_chi2topoSig", fH3L, fLa, c,pdf,"chi2topo (2.989<M<2.995)", "p",8, "#Lambda+d ME", "#Lambda+d SE");
+  // projAndComp("hH3LptProtonPt", fH3L, fLa, c,pdf,"chi2topo (2.989<M<2.995)", "p",1, "#Lambda+d ME", "#Lambda+d SE");
+  // projAndComp("hH3LptPionPt", fH3L, fLa, c,pdf,"chi2topo (2.989<M<2.995)", "p",1, "#Lambda+d ME", "#Lambda+d SE");
+  projAndComp("hH3LptDeuPt", fH3L, fLa, c,pdf,"chi2topo (2.989<M<2.995)", "p",1, "#Lambda+d ME", "#Lambda+d SE");
+  //
+  // projAndComp("hptH3L_chi2ndfSig", fH3L, fLa, c,pdf,"chi2NDF (2.989<M<2.995)", "p",4, "#Lambda+d ME", "#Lambda+d SE");
+  // projAndScaleComp("hptH3L_chi2topo", 1, fH3L, fLa, fLa,c,pdf,"chi2topo", "p",4,"#Lambda+d C(k*)-1","#Lambda+d no wt", "dp#pi" );
+  // projAndScaleComp("hptH3L_chi2ndf", 1, fH3L, fLa, fLa,c,pdf,"chi2NDF", "p",8,"#Lambda+d C(k*)-1","#Lambda+d no wt", "dp#pi" );
+  // projAndScaleComp("hptH3L_l", 1, fH3L, fLa, fLa,c,pdf,"l", "p",8,"#Lambda+d C(k*)-1","#Lambda+d no wt", "dp#pi" );
 
   pdf->On();
   pdf->Close();
@@ -2739,7 +2779,8 @@ void drawMixData_015pt()
   hYield->SaveAs("fH3L_yield_0050.root");
   addpdf(pdf);
 
-  TFile* fMc_ld = TFile::Open("fout_Lambda_MC_Cuts_0050_015pt_sys_pid3.root");
+  // TFile* fMc_ld = TFile::Open("fout_Lambda_MC_Cuts_0050_015pt_sys_pid3.root");
+  TFile* fMc_ld = TFile::Open("fout_Lambda_MC_Cuts_0050_015pt_sys_mixpid3.root");
   TFile* fMc = TFile::Open("fout_H3L_MC_0050_015pt_sys.root");
   // TFile* fMc = TFile::Open("fout_H3L_MC_0080_010pt.root");
   TH1F* hPhase[3];
@@ -2828,7 +2869,6 @@ void drawMixData_015pt()
     double perr;
     double purity1_s = calpurity("h3H3L_chi2ndf",0, 3.5, edge[ij][2], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{NDF}", 2, 0, 10, perr, 0.25);
 
-    double purity2_s = calpurity("h3H3L_chi2topo",0, 3.,  edge[ij][2],  edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
     // calpurityCut("h3H3L_chi2topo", "hH3LMassPtY", 0, 3.,  edge[ij][2],  edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
 
     for (int ipt=0;ipt<npt;ipt++)
@@ -2842,6 +2882,7 @@ void drawMixData_015pt()
       // double purity = (purity1+purity2)*0.5;
       // perr = fabs(purity2-purity1);
       // perr = perr/purity;
+    double purity2_s = calpurity("h3H3L_chi2topo",0, 3.,  edge[ij][ipt],  edge[ij][ipt], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
       double purity = purity2_s;
       // double purity;
       // purity=1;
@@ -3956,7 +3997,8 @@ void drawComp()
   // TPDF* pdf = new TPDF("MixEventQA_check.pdf");
   // TPDF* pdf = new TPDF("MixEventQA_Jul27.pdf");
   // TPDF* pdf = new TPDF("MixEventQA_beforeDcacut.pdf");
-  TPDF* pdf = new TPDF("MixEventQA_0050_tight.pdf");
+  // TPDF* pdf = new TPDF("MixEventQA_0050_tight.pdf");
+  TPDF* pdf = new TPDF("compare_corr.pdf");
   pdf->Off();
   gStyle->SetPalette(1);
 
@@ -4963,7 +5005,6 @@ void drawMixDataScanNDF(int icut, TString histname, TString topohistname, double
   c->cd();
   addpdf(pdf);
 
-  cout << "????????"<< endl;
   TH2F* hYield = new TH2F( "hYield", "hYield;y,pt", 5, -1., 0., 6, 0, 3);
   double xbw = hYield->GetXaxis()->GetBinWidth(1);
   double ybw = hYield->GetYaxis()->GetBinWidth(1);
@@ -5039,18 +5080,19 @@ void drawMixDataScanNDF(int icut, TString histname, TString topohistname, double
     heff[ij]->Draw();
     addpdf(pdf);
   }
-
   double ptesterr[10];
   double chi2topo[10]={1,1.5,1.75,2,2.25,2.5,2.75,3,3.25, 3.5 };
   double puritytest[10];
   for (int i=0;i<10;i++) {
-    puritytest[i] = calpurity(Form("h3H3L_chi2topoNDFCut%i",i),0,2,  3., 1., -0.25, -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, ptesterr[i], 0.25);
-    // puritytest[i] = calpurity("h3H3L_chi2ndf", 0, chi2topo[i], 3., 1., -0.25, -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, ptesterr[i], 0.25);
-    // puritytest[i] = calpurity("h3H3L_chi2topo",0, 3,  3., 1., -0., -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, ptesterr[i], 0.25);
+    double perr;
+  // puritytest[i] = calpurityCut( Form("hH3LMassPtYNDFCut%d", i),  Form("h3H3L_chi2topoNDFCut%d", i), 0, 2, 3., 1., -0.75, 0, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 0, 0, 10, perr, 0.25);
+  //   // puritytest[i] = calpurity("h3H3L_chi2topo",0, 3,  3., 1., -0., -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, ptesterr[i], 0.25);
+    calpurityCut( Form("h3H3L_chi2topoNDFCut%d", i), Form("hH3LMassPtYNDFCut%d",i ), 0, 2., 3, 1.5, 0, -0.75, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
+    calpurityCut( "h3H3L_chi2ndf", Form("hH3LMassPtYNDFCut%d", i), 0, chi2topo[i], 3, 1.5, 0, -0.75, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{ndf}", 1, 0, 10, perr, 0.25);
   }
-  for (int i=0;i<7;i++) 
-    cout <<chi2topo[i]<<" "<<puritytest[i]<<" "<<ptesterr[i] << endl;
-  TGraphErrors* gpurity = new TGraphErrors(7, chi2topo , puritytest,0, ptesterr  );
+  // for (int i=0;i<7;i++) 
+  //   cout <<chi2topo[i]<<" "<<puritytest[i]<<" "<<ptesterr[i] << endl;
+  TGraphErrors* gpurity = new TGraphErrors(10, chi2topo , puritytest,0, ptesterr  );
   gpurity->Draw("pA");
   gpurity->GetXaxis()->SetTitle("Chi2Topo");
   gpurity->GetYaxis()->SetTitle("Purity");
@@ -5092,11 +5134,13 @@ void drawMixDataScanNDF(int icut, TString histname, TString topohistname, double
     // double purity2_s = calpurity("h3H3L_chi2topo",0, 3.,  edge[ij][3],  edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
     // cout << "ok?"<<endl;
     // double purity2_s = calpurityCut("h3H3L_chi2topo", Form("hH3LMassPtYTopoCut%d", icut) ,0, chi2topo[icut], edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
-    double purity2_s = calpurityCut( topohistname, histname, 0, topocut, edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
+    // double purity2_s = calpurityCut( topohistname, histname, 0, topocut, edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
     // double purity2_s = calpurityCut("h3H3L_chi2topo", "hH3LMassPtY" ,0, chi2topo[icut], edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
     // double purity2_s = calpurity("h3H3L_chi2topo",0, chi2topo[icut], edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
     // double puritytest = calpurity("h3H3L_chi2topo",0, 3.,  3.,  1.,ybin[0], ybin[2], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
     // double purity3_s = calpurity("h3H3L_l",8, 99,  3.,  1., ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L decaylength", 2, 0, 100, perr, 0.3);
+    // double purity2_s = calpurityCut( topohistname, histname, 0, topocut, edge[ij][ipt+1], edge[ij][ipt], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 4, 0, 10, perr, 0.25);
+    double purity2_s = calpurityCut( topohistname, histname, 0, topocut, edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
 
     for (int ipt=0;ipt<npt;ipt++)
     {
@@ -6103,10 +6147,10 @@ void drawMixDataScanSys(int icut, TString histname, TString topohistname, TStrin
   double ptesterr[7];
   double chi2topo[7]={0.2,0.6,1,1.5,2,2.5,3 };
   double puritytest[7];
-  // for (int i=0;i<7;i++) {
-  //   puritytest[i] = calpurity("h3H3L_chi2topo",0,chi2topo[i],  3., 1., -0.25, -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, ptesterr[i], 0.25);
-  //   // puritytest[i] = calpurity("h3H3L_chi2topo",0, 3,  3., 1., -0., -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, ptesterr[i], 0.25);
-  // }
+  for (int i=0;i<7;i++) {
+    puritytest[i] = calpurity("h3H3L_chi2topo",0,chi2topo[i],  3., 1., -0.25, -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 0, 0, 10, ptesterr[i], 0.25);
+    // puritytest[i] = calpurity("h3H3L_chi2topo",0, 3,  3., 1., -0., -0.5, f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, ptesterr[i], 0.25);
+  }
   for (int i=0;i<7;i++) 
     cout <<chi2topo[i]<<" "<<puritytest[i]<<" "<<ptesterr[i] << endl;
   TGraphErrors* gpurity = new TGraphErrors(7, chi2topo , puritytest,0, ptesterr  );
@@ -6148,7 +6192,7 @@ void drawMixDataScanSys(int icut, TString histname, TString topohistname, TStrin
     double perr;
     // double purity1_s = calpurityCut("h3H3L_chi2ndf", "hH3LMassPtY",0, 3.5, edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{NDF}", 2, 0, 10, perr, 0.25);
     // double purity2_s = calpurityCut(Form("h3H3L_chi2ndfSysCut%d", icut), histname,0, 3.5,  edge[ij][3],  edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{NDF}", 2, 0, 10, perr, 0.25);
-    double purity2_s = calpurityCut( topohistname, histname , 0, topocut, edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
+    double purity2_s = calpurityCut( topohistname, histname , 0, topocut, edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 0, 0, 10, perr, 0.25);
     // double purity2_s = calpurityCut( topohistname, "hH3LMassPtY", 0, topocut, edge[ij][3], edge[ij][0], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
     // double purity3_s = calpurity("h3H3L_l",8, 99,  3.,  1., ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L decaylength", 2, 0, 100, perr, 0.3);
 
@@ -6160,14 +6204,14 @@ void drawMixDataScanSys(int icut, TString histname, TString topohistname, TStrin
       double efferr = heff[ij]->GetBinError(ipt+1)/eff;
       // double purity1 = calpurity("h3H3L_chi2ndf",0, 3.5, edge[ij][ipt+1], edge[ij][ipt], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{NDF}", 2, 0, 10, perr, 0.25);
       // double purity2 = calpurity("h3H3L_chi2topo", 0, chi2topo[icut], edge[ij][ipt+1], edge[ij][ipt], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.25);
+    // double purity2_s = calpurityCut( topohistname, histname , 0, topocut, edge[ij][ipt+1], edge[ij][ipt], ybin[ij], ybin[ij+1], f1, f2, scale, fMc, fMc_ld, c, pdf, "H3L #chi^{2}_{topo}", 2, 0, 10, perr, 0.);
       // double purity = (purity1+purity2)*0.5;
       // perr = fabs(purity2-purity1);
       double purity = purity2_s;
       perr = perr/purity;
       // double purity = purity2;
       // double purity = purity1_s;
-      // double purity;
-      // purity=1;
+      // double purity=1;
       // perr = 0;
       double yield_cor = y3b/eff;
       double err = sqrt(y3berr*y3berr + efferr*efferr)*yield_cor;
@@ -7835,14 +7879,14 @@ void scanCuts()
   for (int i=1;i<7;i++)
   { 
     // drawMixDataScanTopo(i, Form("hH3LMassPtYTopoCut%d",i ), "h3H3L_chi2topo", cuts[i], p[i], perr[i]); 
-    // drawMixDataScanTopo(i, Form("hH3LMassPtYTopoCut%d",i ), "h3H3L_chi2topo", cuts[i], p[i], perr[i]); 
+    drawMixDataScanTopo(i, Form("hH3LMassPtYTopoCut%d",i ), "h3H3L_chi2topo", cuts[i], p[i], perr[i]); 
     // drawMixDataScanTopo(i, Form("hH3LMassPtYTopoCut%d",i ), Form("h3H3L_chi2ndfTopoCut%d",i), 3.5, p[i], perr[i]); 
   }
-  TGraphErrors* gBr = new TGraphErrors( 6, cuts+1 , p+1, 0, perr+1 );
-  gBr->Draw("pA");
-  gBr->GetXaxis()->SetTitle("Chi2Topo Cuts");
-  gBr->GetYaxis()->SetTitle("R_{3}");
-  gBr->SaveAs("scantopoBr.root");
+  // TGraphErrors* gBr = new TGraphErrors( 6, cuts+1 , p+1, 0, perr+1 );
+  // gBr->Draw("pA");
+  // gBr->GetXaxis()->SetTitle("Chi2Topo Cuts");
+  // gBr->GetYaxis()->SetTitle("R_{3}");
+  // gBr->SaveAs("scantopoBr.root");
   //
   // drawMixDataScanTopo(6, p[6], perr[6]); 
   //
@@ -7889,12 +7933,12 @@ void scanCuts()
   for (int i=1;i<7;i++)
   {
     f[i] = new TFile( Form("fout_0050_scan_%d.root", i));
-    // h[i] = (TH1F*)f[i]->Get("hPurityCor_1")->Clone(Form("htest%d",i));
-    // h2[i] = (TH1F*)f[i]->Get("hPurityCor_0")->Clone(Form("htest2%d",i));
-    // h3[i] = (TH1F*)f[i]->Get("hPurityCor_2")->Clone(Form("htest2%d",i));
-    h3[i] = (TH1F*)f[i]->Get("hYieldCor_2")->Clone(Form("htest2%d",i));
-    h2[i] = (TH1F*)f[i]->Get("hYieldCor_0")->Clone(Form("htest2%d",i));
-    h[i] = (TH1F*)f[i]->Get("hYieldCor_1")->Clone(Form("htest%d",i));
+    h[i] = (TH1F*)f[i]->Get("hPurityCor_1")->Clone(Form("htest%d",i));
+    h2[i] = (TH1F*)f[i]->Get("hPurityCor_0")->Clone(Form("htest2%d",i));
+    h3[i] = (TH1F*)f[i]->Get("hPurityCor_2")->Clone(Form("htest2%d",i));
+    // h3[i] = (TH1F*)f[i]->Get("hYieldCor_2")->Clone(Form("htest2%d",i));
+    // h2[i] = (TH1F*)f[i]->Get("hYieldCor_0")->Clone(Form("htest2%d",i));
+    // h[i] = (TH1F*)f[i]->Get("hYieldCor_1")->Clone(Form("htest%d",i));
     h[i]->SetDirectory(0);
     h2[i]->SetDirectory(0);
     h3[i]->SetDirectory(0);
@@ -7983,7 +8027,7 @@ void scanCutsNDF()
     // drawMixDataScanNDF(i, Form("hH3LMassPtYNDFCut%d",i ), Form("h3H3L_chi2topoNDFCut%d", i), 2, p[i], perr[i]); 
     // drawMixDataScanNDF(i, Form("hH3LMassPtYNDFCut%d",i ), "h3H3L_chi2ndf", cuts[i], p[i], perr[i]); 
   }
-  //   // drawMixDataScanTopo(9, Form("hH3LMassPtYNDFCut%d",9 ), Form("h3H3L_chi2topoNDFCut%d", 9), 2, p[9], perr[9]); 
+    // drawMixDataScanNDF(9, Form("hH3LMassPtYNDFCut%d", 9 ), Form("h3H3L_chi2topoNDFCut%d", 9), 2, p[9], perr[9]); 
   // TGraphErrors* gBr = new TGraphErrors( 9, cuts+1 , p+1, 0, perr+1 );
   // gBr->Draw("pA");
   // gBr->GetXaxis()->SetTitle("Chi2Topo Cuts");
@@ -8106,11 +8150,11 @@ void scanCutsNDF()
   drawLine(0.4,yield[9]+sqrt(sys/n),3.1,yield[9]+sqrt(sys/n), 2,2,2);
   return;
 
-  TGraphErrors* gbr = new TGraphErrors(6, cuts+1,br+1, 0, brerr+1);
+  TGraphErrors* gbr = new TGraphErrors(10, cuts,br, 0, brerr);
   gbr->SetMarkerStyle(kOpenCircle);
   gbr->Draw("pa");
   gbr->GetYaxis()->SetTitle("R_{3}");
-  gbr->GetXaxis()->SetTitle("Chi2Topo Cuts");
+  gbr->GetXaxis()->SetTitle("Chi2NDF Cuts");
   TGraphErrors* gy3berr = new TGraphErrors(6, cuts+1,y3brelerr+1, 0, 0);
   gy3berr->SetMarkerStyle(kOpenCircle);
   gy3berr->Draw("pa l");
@@ -8125,14 +8169,18 @@ void SysCuts()
   double p[nsys+1],perr[nsys+1];
   for (int i=0;i<nsys;i++)
   { 
-    double topocut = 2.;
-    if (i==4) topocut=1.5;
-    else if (i==5) topocut=2.5;
+    // double topocut = 2.;
+    // if (i==4) topocut=1.5;
+    // else if (i==5) topocut=2.5;
     // drawMixDataScanSys(i, Form("hH3LMassPtYSysCut%d",i ), Form("h3H3L_chi2topoSysCut%d",i), Form("syscuts_0050_topocut%d.pdf", i),  topocut, p[i], perr[i]); 
-    // drawMixDataScanSys(i, Form("hH3LMassPtYSysCut%d",i ), Form("h3H3L_chi2ndfSysCut%d",i), Form("syscuts_0050_ndfcut%d.pdf", i),  topocut, p[i], perr[i]); 
+    double ndfcut = 3.5;
+    if (i==6) ndfcut=3;
+    else if (i==7) ndfcut=4;
+    // drawMixDataScanSys(i, Form("hH3LMassPtYSysCut%d",i ), Form("h3H3L_chi2ndfSysCut%d",i), Form("syscuts_0050_ndfcut%d.pdf", i),  ndfcut, p[i], perr[i]); 
   }
   //  drawMixDataScanSys(6, Form("hH3LMassPtYSysCut%d",6 ), Form("h3H3L_chi2topoSysCut%d",6), Form("syscuts_0050_topocut%d.pdf", 6), 2, p[6], perr[6]); 
-  // drawMixDataScanSys(nsys, "hH3LMassPtY", "h3H3L_chi2topo", Form("syscuts_0050_topocut%d.pdf", 14),  2., p[nsys], perr[nsys]); 
+  drawMixDataScanSys(nsys, "hH3LMassPtY", "h3H3L_chi2topo", Form("syscuts_0050_topocut%d.pdf", 14),  2., p[nsys], perr[nsys]); 
+  return;
   // drawMixDataScanSys(nsys, "hH3LMassPtY", "h3H3L_chi2ndf", Form("syscuts_0050_ndfcut%d.pdf", 14),  3.5, p[nsys], perr[nsys]); 
   double cuts[20]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
   // TGraphErrors* gBr = new TGraphErrors( nsys+1, cuts, p, 0, perr );
@@ -8268,11 +8316,11 @@ void SysCuts()
   {
      double delta = fabs(yield[ip] - yield[14]);
      double ds = sqrt( fabs(error[ip]*error[ip]-error[14]*error[14]));
-     if (ds>delta) cout << "pass check "<< ip+1<< endl;
-     else {
+     // if (ds>delta) cout << "pass check "<< ip+1<< endl;
+     // else {
        sys+=delta*delta/2.;
       // else if (ip==12) sys+=delta*delta;
-     }
+     // }
   }
   cout <<"systematics of yields: "<< sqrt(sys)/yield[14] <<endl;
   cout <<"systematics of R3: "<<sqrt( pow((y2b/(yield[14]+y2b)/(yield[14]+y2b))*sqrt(sys), 2))<<" "<< y2b/(y2b+yield[14])<<" "<<brerr[14]  <<endl;
@@ -8280,13 +8328,13 @@ void SysCuts()
   drawLine(0, yield[14]+sqrt(sys), 16, yield[14]+sqrt(sys), 2, 2,2);
   drawLine(0, yield[14]-sqrt(sys), 16, yield[14]-sqrt(sys), 2, 2,2);
   gyield_d->Draw("p same");
-  return;
 
   TGraphErrors* gbr = new TGraphErrors(nsys+1, cuts,br, 0, brerr);
   gbr->SetMarkerStyle(kOpenCircle);
   gbr->Draw("pa");
   gbr->GetYaxis()->SetTitle("R_{3}");
   gbr->GetXaxis()->SetTitle("Sys. Cuts");
+  return;
 
   TGraphErrors* gy3berr = new TGraphErrors(nsys+1, cuts,y3brelerr, 0, 0);
   gy3berr->SetMarkerStyle(kOpenCircle);
@@ -8309,7 +8357,7 @@ void drawData()
   // checkbkgd();
   // correctEff();
 
-   SysCuts(); 
+  SysCuts(); 
   // scanCuts(); 
   // scanCutsNDF(); 
   // drawComp();

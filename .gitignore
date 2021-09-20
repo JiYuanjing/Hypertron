@@ -12,3 +12,5 @@ star_lib_forcheck
 H3L_3body_yuehang/data/mixed/LambdaMC_mix.root.pid1
 H3L_3body_yuehang/data/mixed/fillhist.C
 H3L_3body_yuehang/data/mixed/LambdaMC.root.v1
+Fengyi_StRoot/*
+Package_Flow_vn_ht3b_sig_newcut_r1.package
